@@ -13,10 +13,15 @@ use Pim\Bundle\CatalogBundle\Helper\LocaleHelper;
  */
 class LocaleExtension extends \Twig_Extension
 {
-    private $localeHelper;
+    /**
+     * @var LocaleHelper
+     */
+    protected $localeHelper;
 
     /**
-     * @param \Pim\Bundle\CatalogBundle\Helper\LocaleHelper $localeHelper
+     * Constructor
+     *
+     * @param LocaleHelper  $localeHelper
      */
     public function __construct(LocaleHelper $localeHelper)
     {
@@ -36,7 +41,7 @@ class LocaleExtension extends \Twig_Extension
     }
 
     /**
-     * @return array
+     * {@inheritdoc}
      */
     public function getFilters()
     {
@@ -49,7 +54,7 @@ class LocaleExtension extends \Twig_Extension
      * Get displayed locale from locale code
      *
      * @param string $code
-     *
+     * @param string $locale
      * @return string
      */
     public function localeLabel($code, $locale = null)
@@ -79,6 +84,13 @@ class LocaleExtension extends \Twig_Extension
         return $this->localeHelper->getLocaleCurrency();
     }
 
+    /**
+     * Returns the flag icon for a locale
+     * 
+     * @param string $code
+     * @param string $locale
+     * @return string
+     */
     public function flag($code, $locale = null)
     {
         return $this->localeHelper->getFlag($code, $locale);
