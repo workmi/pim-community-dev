@@ -238,7 +238,7 @@ class ProductController extends AbstractDoctrineController
 
         $params = array(
             'datagrid'   => $datagrid->createView(),
-            'locales'    => $this->localeManager->getActiveLocales(),
+            'locales'    => $this->localeManager->getUserLocales(),
             'dataLocale' => $this->getDataLocale(),
             'dataScope' => $this->getDataScope(),
         );
@@ -427,7 +427,7 @@ class ProductController extends AbstractDoctrineController
             'created'        => $this->auditManager->getOldestLogEntry($product),
             'updated'        => $this->auditManager->getNewestLogEntry($product),
             'datagrid'       => $datagrid->createView(),
-            'locales'        => $this->localeManager->getActiveLocales()
+            'locales'        => $this->localeManager->getUserLocales()
         );
     }
 
@@ -618,18 +618,7 @@ class ProductController extends AbstractDoctrineController
      */
     protected function getDataLocale()
     {
-        $dataLocale = $this->getRequest()->get('dataLocale');
-        if ($dataLocale === null) {
-            $dataLocale = (string) $this->getUser()->getValue('cataloglocale');
-        }
-        if (!$dataLocale) {
-            throw new \Exception('User must have a catalog locale defined');
-        }
-        if (!$this->aclManager->isResourceGranted('pim_catalog_locale_'.$dataLocale)) {
-            throw new \Exception(sprintf("User doesn't have access to the locale '%s'", $dataLocale));
-        }
-
-        return $dataLocale;
+        return $this->localeManager->getDataLocale()->getCode();
     }
 
     /**
