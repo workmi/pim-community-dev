@@ -137,7 +137,7 @@ class EditCommonAttributes extends AbstractMassEditAction
     public function getFormOptions()
     {
         return array(
-            'locales'          => $this->localeManager->getActiveLocales(),
+            'locales'          => $this->localeManager->getUserLocales(),
             'commonAttributes' => $this->commonAttributes,
         );
     }
