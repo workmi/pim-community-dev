@@ -147,7 +147,7 @@ class EditCommonAttributes extends AbstractMassEditAction
      */
     public function initialize(array $products)
     {
-        $this->commonAttributes = $this->productManager->getAttributeRepository()->findAll();
+        $this->initializeCommonAttributes();
 
         foreach ($products as $product) {
             foreach ($this->commonAttributes as $key => $attribute) {
@@ -169,6 +169,14 @@ class EditCommonAttributes extends AbstractMassEditAction
                 $this->addValues($attribute);
             }
         }
+    }
+
+    /**
+     * Initializes self::commonAtributes with values from the repository
+     */
+    protected function initializeCommonAttributes()
+    {
+        $this->commonAttributes = $this->productManager->getAttributeRepository()->findAll();
     }
 
     /**
