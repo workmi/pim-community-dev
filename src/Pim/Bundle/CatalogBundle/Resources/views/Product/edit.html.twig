@@ -103,8 +103,8 @@
             </div>
             {% if resource_granted("pim_catalog_product_remove") %}
                 {{ elements.deleteLink(path('pim_catalog_product_remove', { id: form.vars.value.id }), path('pim_catalog_product_index'), 'confirmation.remove.product'|trans({ '%name%': product.label }), "", 'flash.product.removed'|trans) }}
-                {{ elements.submitBtn }}
             {% endif %}
+            {{ elements.submitBtn }}
         {% endset %}
 
         {% set subtitle %}
