@@ -4,7 +4,7 @@ namespace Pim\Bundle\CatalogBundle\MassEditAction;
 
 use Oro\Bundle\UserBundle\Acl\ManagerInterface as ACLManagerInterface;
 use Pim\Bundle\CatalogBundle\Manager\ProductManager;
-
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * A batch operation operator
@@ -18,6 +18,7 @@ class MassEditActionOperator
 {
     /**
      * @var MassEditAction $operation
+     * @Assert\Valid
      */
     protected $operation;
 
