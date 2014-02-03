@@ -88,8 +88,8 @@ class Classify extends AbstractMassEditAction
     {
         foreach ($products as $product) {
             foreach ($this->getCategories() as $category) {
-                $product->addCategory($category);
-                $this->manager->getStorageManager()->persist($product);
+                $category->addProduct($product);
+                $this->manager->getStorageManager()->persist($category);
             }
         }
         $this->manager->getStorageManager()->flush();
