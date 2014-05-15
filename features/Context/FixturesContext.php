@@ -74,6 +74,8 @@ class FixturesContext extends RawMinkContext
 
     private $placeholderValues = array();
 
+    private $username;
+
     /**
      * @BeforeScenario
      */
@@ -453,7 +455,7 @@ class FixturesContext extends RawMinkContext
                         if ("" === $data['value']) {
                             $data = null;
                         } elseif (!$data instanceof \DateTime) {
-                            $data = new \DateTime($data['value']);
+                            $data = new \DateTime($data['value'], new \DateTimeZone('UTC'));
                         }
 
                         $value->setData($data);
@@ -1086,6 +1088,14 @@ class FixturesContext extends RawMinkContext
     }
 
     /**
+     * @param $username
+     */
+    public function setUsername($username)
+    {
+        $this->username = $username;
+    }
+
+    /**
      * @param string $columns
      *
      * @Given /^I\'ve displayed the columns (.*)$/
@@ -1093,7 +1103,7 @@ class FixturesContext extends RawMinkContext
     public function iVeDisplayedTheColumns($columns)
     {
         $alias = 'product-grid';
-        $user  = $this->getUser('Julia');
+        $user  = $this->getUser($this->username);
 
         $view = $this->getRepository('PimDataGridBundle:DatagridView')->findOneBy(
             [
@@ -1411,7 +1421,7 @@ class FixturesContext extends RawMinkContext
                 if ("" === $data) {
                     $data = null;
                 } elseif (!$data instanceof \DateTime) {
-                    $data = new \DateTime($data);
+                    $data = new \DateTime($data, new \DateTimeZone('UTC'));
                 }
 
                 $value->setData($data);
