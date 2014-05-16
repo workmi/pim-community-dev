@@ -5,6 +5,7 @@ namespace Pim\Bundle\CatalogBundle\Entity\Repository;
 use Pim\Bundle\CatalogBundle\Entity\Family;
 use Pim\Bundle\CatalogBundle\Doctrine\ReferableEntityRepository;
 use Pim\Bundle\EnrichBundle\Form\DataTransformer\ChoicesProviderInterface;
+use Pim\Bundle\CatalogBundle\Entity\Channel;
 
 /**
  * Repository
@@ -119,6 +120,39 @@ class FamilyRepository extends ReferableEntityRepository implements ChoicesProvi
             ->where('r.family=:family')
             ->setParameter('family', $family)
             ->setParameter('localeCode', $localeCode);
+    }
+
+    /**
+     * Returns all families code with their required attributes code
+     * Requirements can be restricted to a channel.
+     *
+     * @param Family  $family
+     * @param Channel $channel
+     *
+     * @return array
+     */
+    public function getFullFamilies(Family $family = null, Channel $channel = null)
+    {
+        $qb = $this->createQueryBuilder('f')
+            ->select('f, c, l, r, a, cu')
+            ->join('f.requirements', 'r')
+            ->join('r.attribute', 'a')
+            ->join('r.channel', 'c')
+            ->join('c.locales', 'l')
+            ->join('c.currencies', 'cu')
+            ->where('r.required = 1');
+
+        if (null !== $channel) {
+            $qb->andWhere('r.channel = :channel')
+                ->setParameter('channel', $channel);
+        }
+
+        if (null !== $family) {
+            $qb->andWhere('f.id = :familyId')
+                ->setParameter('familyId', $family->getId());
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
     /**
