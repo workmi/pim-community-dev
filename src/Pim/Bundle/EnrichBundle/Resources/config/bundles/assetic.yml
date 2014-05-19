@@ -11,6 +11,7 @@ assetic:
         - OroSecurityBundle
         - PimUIBundle
         - PimCatalogBundle
+        - PimUxBundle
     filters:
         lessphp:
             file: %kernel.root_dir%/../vendor/leafo/lessphp/lessc.inc.php
