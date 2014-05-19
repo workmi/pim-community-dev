@@ -8,9 +8,12 @@ angular.module('App.directives', [])
             },
             templateUrl: '/bundles/pimux/templates/grid/grid.html',
             controller: function(GridManager, $scope) {
+                $scope.loading = true;
+
                 GridManager.load($scope.name).then(function (data) {
                     $scope.metadata = data.metadata;
                     $scope.data     = data.data;
+                    $scope.loading  = false;
                 });
 
                 $scope.applyFilter = function(filterName, value) {
@@ -28,8 +31,10 @@ angular.module('App.directives', [])
                 }, true);
 
                 $scope.$on('grid.need.reload', function () {
+                    $scope.loading = true;
                     GridManager.loadData($scope.name, $scope.metadata).then(function (data) {
-                        $scope.data = data.data;
+                        $scope.data    = data.data;
+                        $scope.loading = false;
                     });
                 });
             }

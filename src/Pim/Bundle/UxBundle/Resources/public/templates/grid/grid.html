@@ -1,5 +1,8 @@
-<div grid-filters></div>
-<div ng-include="'/bundles/pimux/templates/grid/pagination.html'"></div>
+<i class="fa fa-circle-o-notch fa-spin fa-3x" ng-show="loading"></i>
+<div class="row">
+    <div grid-filters></div>
+</div>
+<div class="row" ng-include="'/bundles/pimux/templates/grid/pagination.html'"></div>
 <div grid-selection></div>
 <table class="table table-condensed table-hover">
     <thead>
