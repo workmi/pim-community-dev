@@ -129,7 +129,7 @@ class CompletenessGenerator implements CompletenessGeneratorInterface
      * its family requirements. Only missing completenesses are generated.
      *
      * @param array $normalizedData
-     * @parma array $normalizedReqs
+     * @param array $normalizedReqs
      *
      * @return array $completenesses
      */
@@ -246,6 +246,8 @@ class CompletenessGenerator implements CompletenessGeneratorInterface
      *
      * @param ProductInterface $product
      * @param Channel          $channel
+     *
+     * @return array
      */
     protected function getFamilyRequirements(ProductInterface $product = null, Channel $channel = null)
     {
@@ -325,7 +327,7 @@ class CompletenessGenerator implements CompletenessGeneratorInterface
      *
      * @param AbstractAttribute $attribute
      * @param Channel           $channel
-     * @parma Locale            $locale
+     * @param Locale            $locale
      *
      * @return string
      */
@@ -423,6 +425,28 @@ class CompletenessGenerator implements CompletenessGeneratorInterface
             ->field('family')->equals($family->getId())
             ->field('completenesses')->unsetField()
             ->field('normalizedData.completenesses')->unsetField()
+            ->getQuery()
+            ->execute();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function scheduleForChannelAndLocale(Channel $channel, Locale $locale)
+    {
+        $productQb = $this->documentManager->createQueryBuilder($this->productClass);
+
+        $pullExpr = $productQb->expr()
+                ->addAnd($productQb->expr()->field('channel')->equals($channel->getId()))
+                ->addAnd($productQb->expr()->field('locale')->equals($locale->getId()));
+
+        $productQb
+            ->update()
+            ->multiple(true)
+            ->field(
+                sprintf('normalizedData.completenesses.%s-%s', $channel->getCode(), $locale->getCode())
+            )->unsetField()
+            ->field('completenesses')->pull($pullExpr)
             ->getQuery()
             ->execute();
     }
