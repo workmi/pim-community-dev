@@ -46,7 +46,23 @@ class AttributeRepository extends EntityRepository implements
      */
     public function findWithGroups(array $attributeIds = array(), array $criterias = array())
     {
-        $qb = $this->createQueryBuilder('a')
+        $qb = $this->findWithGroupsQB($attributeIds, $criterias);
+
+        return $qb->getQuery()->execute();
+    }
+
+    /**
+     * Find attributes with related attribute groups QB
+     *
+     * @param array $attributeIds
+     * @param array $criterias
+     *
+     * @return QueryBuilder
+     */
+    protected function findWithGroupsQB(array $attributeIds = array(), array $criterias = array())
+    {
+        $qb = $this->createQueryBuilder('a');
+        $qb
             ->addSelect('atrans', 'g', 'gtrans')
             ->leftJoin('a.translations', 'atrans')
             ->leftJoin('a.group', 'g')
@@ -56,11 +72,13 @@ class AttributeRepository extends EntityRepository implements
             $qb->andWhere($qb->expr()->in('a.id', $attributeIds));
         }
 
-        foreach ($criterias as $criteria => $value) {
-            $qb->andWhere($qb->expr()->eq(sprintf('a.%s', $criteria), $value));
+        if (isset($criterias['conditions'])) {
+            foreach ($criterias['conditions'] as $criteria => $value) {
+                $qb->andWhere($qb->expr()->eq(sprintf('a.%s', $criteria), $value));
+            }
         }
 
-        return $qb->getQuery()->execute();
+        return $qb;
     }
 
     /**
@@ -316,19 +334,31 @@ class AttributeRepository extends EntityRepository implements
     /**
      * Get ids of attributes useable in grid
      *
+     * @param array $codes
+     * @param array $groupIds
+     *
      * @return array
      */
-    public function getAttributeIdsUseableInGrid()
+    public function getAttributeIdsUseableInGrid($codes = null, $groupIds = null)
     {
         $qb = $this->_em->createQueryBuilder()
             ->select('att.id')
             ->from($this->_entityName, 'att', 'att.id');
 
-        $qb->andWhere(
-            "att.useableAsGridColumn = 1 ".
-            "OR att.useableAsGridFilter = 1 ".
-            "OR att.attributeType = 'pim_catalog_simpleselect'"
-        );
+        $qb->andWhere("att.useableAsGridColumn = 1 OR att.useableAsGridFilter = 1");
+
+        if (is_array($codes) && !empty($codes)) {
+            $qb->andWhere("att.code IN (:codes)");
+            $qb->setParameter('codes', $codes);
+        }
+
+        if (is_array($groupIds) && !empty($groupIds)) {
+            $qb->andWhere("att.group IN (:groupIds)");
+            $qb->setParameter('groupIds', $groupIds);
+        } elseif (is_array($groupIds)) {
+            return [];
+        }
+
         $result = $qb->getQuery()->execute([], AbstractQuery::HYDRATE_ARRAY);
 
         return array_keys($result);
