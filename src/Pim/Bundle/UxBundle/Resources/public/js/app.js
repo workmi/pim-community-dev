@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('App', ['ngSanitize', 'ui.router', 'ui.bootstrap', 'App.services', 'App.controllers', 'App.directives', 'App.filters']).
+angular.module('App', ['ngSanitize', 'ui.router', 'ui.bootstrap', 'App.services', 'App.controllers', 'App.directives', 'App.filters', 'App.grid']).
 config(function($stateProvider, $urlRouterProvider) {
     $urlRouterProvider.otherwise('/');
 
