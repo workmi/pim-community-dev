@@ -42,17 +42,12 @@ angular.module('App.grid', [])
     })
     .directive('gridHeader', function() {
         return {
-            templateUrl: '/bundles/pimux/templates/grid/header.html',
+            templateUrl: '/bundles/pimux/templates/grid/header.html'
         };
     })
     .directive('gridRow', function() {
         return {
-            templateUrl: '/bundles/pimux/templates/grid/row.html',
-            controller: function($scope) {
-                $scope.getCellConfig = function (columnName) {
-                    return _.find($scope.metadata.columns, {name: columnName});
-                };
-            }
+            templateUrl: '/bundles/pimux/templates/grid/row.html'
         };
     })
     .directive('gridCell', function(CellManager) {

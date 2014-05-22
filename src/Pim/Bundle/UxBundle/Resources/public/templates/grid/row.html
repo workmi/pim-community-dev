@@ -1,9 +1,9 @@
-<td grid-cell-selector>
+<td>
     <input type="checkbox" ng-model="item.selected"/>
 </td>
-<td grid-cell ng-repeat="column in metadata.columns" cell="item[column.name]" column="getCellConfig(column)"></td>
-<td grid-cell-actions>
-    <a class="btn btn-default action" title="{{ action.label }}" ng-repeat="action in metadata.rowActions" ng-click="performRowAction(action)">
+<td grid-cell ng-repeat="column in metadata.columns" cell="item[column.name]" column="column"></td>
+<td>
+    <a class="btn btn-default btn-xs" title="{{ action.label }}" ng-repeat="action in metadata.rowActions">
         <i class="fa fa-{{ action.icon }}"></i>
     </a>
 </td>
