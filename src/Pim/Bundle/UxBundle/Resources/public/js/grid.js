@@ -52,11 +52,6 @@ angular.module('App.grid', [])
     })
     .directive('gridCell', function(CellManager) {
         return {
-            scope: {
-                cell: '=',
-                column: '='
-            },
-            templateUrl: '/bundles/pimux/templates/grid/cell.html',
             controller: function($scope) {
                 $scope.renderCell = function (cell, column) {
                     return CellManager.render(cell, column);
