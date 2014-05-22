@@ -122,7 +122,7 @@ angular.module('App.grid', [])
             var deferred = $q.defer();
 
             $http.get('/datagrid/' + name + '/load?' + $.param(self.gridParams[name])).then(function(resp) {
-                deferred.resolve(self.prepareGridConfig(resp.data));
+                deferred.resolve(self.parseConfig(resp.data));
             });
 
             return deferred.promise;
@@ -153,33 +153,17 @@ angular.module('App.grid', [])
                     data: resp.data
                 };
 
-                deferred.resolve(self.prepareGridConfig(data));
+                deferred.resolve(self.parseConfig(data));
             });
 
             return deferred.promise;
         };
 
-        this.prepareGridConfig = function (config) {
-
+        this.parseConfig = function (config) {
             try {
                 config.data = JSON.parse(config.data);
             } catch (e) {
-
             }
-
-            var columns = _.pluck(config.metadata.columns, 'name');
-
-            config.data.data = _.map(config.data.data, function (row) {
-                return {
-                    row: _.map(columns, function (column) {
-                        return {
-                            value: row[column],
-                            column: column
-                        };
-                    }),
-                    entity: row
-                };
-            });
 
             return config;
         };
@@ -209,4 +193,4 @@ angular.module('App.grid', [])
         return {
             render: this.renderCell
         };
-    });;
+    });
