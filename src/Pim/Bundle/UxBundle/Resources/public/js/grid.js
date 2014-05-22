@@ -21,16 +21,16 @@ angular.module('App.grid', [])
                     config[filterName] = value;
 
                     GridManager.applyFilter($scope.name, config);
-                    $scope.$broadcast('grid.need.reload');
+                    $scope.$broadcast('grid.state.changed');
                 };
 
                 $scope.$watch('metadata.state', function (newValue, oldValue) {
                     if (oldValue) {
-                        $scope.$broadcast('grid.need.reload');
+                        $scope.$broadcast('grid.state.changed');
                     }
                 }, true);
 
-                $scope.$on('grid.need.reload', function () {
+                $scope.$on('grid.state.changed', function () {
                     $scope.loading = true;
                     GridManager.loadData($scope.name, $scope.metadata).then(function (data) {
                         $scope.data    = data.data;

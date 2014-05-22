@@ -1,5 +1,5 @@
 <div class="dropdown" ng-hide="!(metadata.filters|filter:{enabled:false}).length">
-    <a class="dropdown-toggle">Manage filters</a>
+    <button class="btn btn-default dropdown-toggle">Manage filters</button>
     <ul class="dropdown-menu">
         <li ng-repeat="filter in metadata.filters | filter:{enabled:false}">
             <a ng-click="filter.enabled = true" ng-bind="filter.label"></a>
