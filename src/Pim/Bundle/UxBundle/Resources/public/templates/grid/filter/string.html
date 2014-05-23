@@ -7,6 +7,6 @@
             </li>
         </ul>
     </div>
-    <input type="text" ng-model="state.params.value">
-    <button class="btn btn-sm btn-primary" ng-disabled="!(state.params.type && state.params.value)" type="button">Update</button>
+    <input type="text" ng-model="state.params.value" ng-required="state.params.type != 'empty'" ng-show="state.params.type != 'empty'">
+    <button type="submit" class="btn btn-sm btn-primary" ng-disabled="!(state.params.type && (state.params.type === 'empty' || state.params.value))">Update</button>
 </form>
