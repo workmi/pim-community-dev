@@ -1,12 +1,18 @@
-<form ng-init="state = { placeholder: 'All', params: {} }" ng-submit="applyFilter(filter.name, state.params)">
-    <div class="dropdown">
-        <a class="dropdown-toggle" ng-bind="state.placeholder"></a>
-        <ul class="dropdown-menu">
-            <li ng-repeat="choice in filter.choices">
-                <a ng-click="state.params.type = choice.value; state.placeholder = choice.label" ng-bind="choice.label"></a>
-            </li>
-        </ul>
-    </div>
-    <input type="text" ng-model="state.params.value" ng-required="state.params.type != 'empty'" ng-show="state.params.type != 'empty'">
-    <button type="submit" class="btn btn-sm btn-primary" ng-disabled="!(state.params.type && (state.params.type === 'empty' || state.params.value))">Update</button>
-</form>
+<div class="pull-left">
+    <span class="btn btn-default" ng-init="filter.selectedChoice = 'All'">
+        {{ filter.label }}
+        <form ng-init="state = { placeholder: 'All', params: {} }" ng-submit="applyFilter(filter.name, state.params)">
+            <div class="dropdown">
+                <a class="dropdown-toggle" ng-bind="state.placeholder"></a>
+                <ul class="dropdown-menu">
+                    <li ng-repeat="choice in filter.choices">
+                        <a ng-click="state.params.type = choice.value; state.placeholder = choice.label" ng-bind="choice.label"></a>
+                    </li>
+                </ul>
+            </div>
+            <input type="text" ng-model="state.params.value" ng-required="state.params.type != 'empty'" ng-show="state.params.type != 'empty'">
+            <button type="submit" class="btn btn-sm btn-primary" ng-disabled="!(state.params.type && (state.params.type === 'empty' || state.params.value))">Update</button>
+        </form>
+    </span>
+    <button class="btn btn-default btn-xs" ng-click="filter.enabled = false;">&times;</button>
+</div>

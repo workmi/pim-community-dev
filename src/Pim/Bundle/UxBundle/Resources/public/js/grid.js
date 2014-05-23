@@ -66,6 +66,7 @@ angular.module('App.grid', [])
     })
     .directive('gridFilter', function() {
         return {
+            replace: true,
             template: '<div ng-include="\'/bundles/pimux/templates/grid/filter/\' + filter.type + \'.html\'"></div>'
         };
     })
