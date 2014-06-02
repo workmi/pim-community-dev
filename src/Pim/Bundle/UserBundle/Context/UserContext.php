@@ -127,12 +127,7 @@ class UserContext
     public function getUserLocales()
     {
         if ($this->userLocales === null) {
-            $this->userLocales = array_filter(
-                $this->localeManager->getActiveLocales(),
-                function ($locale) {
-                    return $this->securityFacade->isGranted(sprintf('pim_enrich_locale_%s', $locale->getCode()));
-                }
-            );
+            $this->userLocales = $this->localeManager->getActiveLocales();
         }
 
         return $this->userLocales;
@@ -259,8 +254,7 @@ class UserContext
      */
     protected function isLocaleAvailable(Locale $locale)
     {
-        return $locale->isActivated() &&
-               $this->securityFacade->isGranted(sprintf('pim_enrich_locale_%s', $locale->getCode()));
+        return $locale->isActivated();
     }
 
     /**
