@@ -222,6 +222,22 @@ class DataGridContext extends RawMinkContext implements PageObjectAwareInterface
     /**
      * @param string $columns
      *
+     * @Given /^I display the columns (.*)$/
+    */
+    public function iDisplayTheColumns($columns)
+    {
+        $columns = $this->getMainContext()->listToArray($columns);
+
+        $this->getMainContext()->executeScript(
+            sprintf('sessionStorage.setItem("product-grid.columns", "%s");', implode(',', $columns))
+        );
+
+        $this->getMainContext()->reload();
+    }
+
+    /**
+     * @param string $columns
+     *
      * @Then /^I should see the columns? (.*)$/
      */
     public function iShouldSeeTheColumns($columns)
@@ -688,6 +704,25 @@ class DataGridContext extends RawMinkContext implements PageObjectAwareInterface
     }
 
     /**
+     * @param string $viewLabel
+     *
+     * @When /^I apply the "([^"]*)" view$/
+     */
+    public function iApplyTheView($viewLabel)
+    {
+        $this->datagrid->applyView($viewLabel);
+        $this->wait();
+    }
+
+    /**
+     * @When /^I delete the view$/
+     */
+    public function iDeleteTheView()
+    {
+        $this->getCurrentPage()->find('css', '#remove-view')->click();
+    }
+
+    /**
      * Create an expectation exception
      *
      * @param string $message
@@ -735,9 +770,9 @@ class DataGridContext extends RawMinkContext implements PageObjectAwareInterface
     }
 
     /**
-     * @param $filterName
-     * @param $values
-     * @param $operator
+     * @param string $filterName
+     * @param mixed  $values
+     * @param string $operator
      *
      * @throws \InvalidArgumentException
      */
@@ -758,7 +793,7 @@ class DataGridContext extends RawMinkContext implements PageObjectAwareInterface
         $criteriaElt->find('css', 'select.filter-select-oro')->selectOption($operator);
 
         $script = <<<'JS'
-        require(['jquery', 'jquery-ui'], function($) {
+        require(['jquery', 'jquery-ui'], function ($) {
             $inputs = $('input.hasDatepicker:visible');
             $inputs.first().datepicker('setDate', $.datepicker.parseDate('yy-mm-dd', '%s'));
             $inputs.last().datepicker('setDate', $.datepicker.parseDate('yy-mm-dd', '%s'));

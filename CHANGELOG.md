@@ -5,6 +5,7 @@
 - Add a mass family edition operation to allow adding or changing attribute requirements on many families at once
 - Allow filtering by empty values for attributes (text, textarea, number, date, simple and multiselect, prices and metrics) and for family property
 - Add an option to filter products by a list of identifier values
+- Don't allow editing the default datagrid view
 
 ## Improvements
 - Group datagrid filters by attribute groups
@@ -13,6 +14,8 @@
 - Ease the adding of subscribers in ProductEditType and AttributeGroupType with addEventSubscriber methods
 - Introduce a ProductValueFormFactory which dispatch a EnrichEvents::CREATE_PRODUCT_VALUE_FORM to ease the product value form customization
 - MongoDB completeness calculation performances
+- Introduce Abstract models for Association, Media, Metric, Price, to ease the overriding of theses classes
+- Allow to override of a repository avoiding to redefine the entity mapping
 
 ## Bug fixes
 - Replace usage of Symfony process to launch background job with a simple exec, more reliable on a heavily loaded environment
