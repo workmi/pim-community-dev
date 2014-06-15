@@ -90,6 +90,7 @@ class CategoryTreeController extends AbstractDoctrineController
      * attribute
      *
      * @param Request $request
+     *
      * @return array
      *
      * @Template
@@ -106,6 +107,7 @@ class CategoryTreeController extends AbstractDoctrineController
      * attribute
      *
      * @param Request $request
+     *
      * @return array
      *
      * @Template("PimEnrichBundle:CategoryTree:listTree.json.twig")
