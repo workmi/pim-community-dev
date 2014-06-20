@@ -8,6 +8,7 @@ use Doctrine\Common\Persistence\ManagerRegistry;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\RouterInterface;
@@ -32,6 +33,7 @@ use Pim\Bundle\UserBundle\Context\UserContext;
 use Pim\Bundle\VersioningBundle\Manager\VersionManager;
 use Pim\Bundle\EnrichBundle\AbstractController\AbstractDoctrineController;
 use Pim\Bundle\EnrichBundle\Exception\DeleteException;
+use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Product Controller
@@ -208,18 +210,17 @@ class ProductController extends AbstractDoctrineController
     /**
      * Edit product
      *
-     * @param Request $request
      * @param integer $id
      *
      * @Template
      * @AclAncestor("pim_enrich_product_edit")
      * @return array
      */
-    public function editAction(Request $request, $id)
+    public function editAction($id)
     {
         $product = $this->findProductOr404($id);
 
-        $this->getEventDispatcher()->dispatch(EnrichEvents::PRE_EDIT_PRODUCT, new GenericEvent($product));
+        $this->dispatch(EnrichEvents::PRE_EDIT_PRODUCT, new GenericEvent($product));
 
         $this->productManager->ensureAllAssociationTypes($product);
 
@@ -229,50 +230,66 @@ class ProductController extends AbstractDoctrineController
             $this->getEditFormOptions($product)
         );
 
-        if ($request->isMethod('POST')) {
-            $form->submit($request, false);
-
-            if ($form->isValid()) {
-                try {
-                    $this->productManager->handleMedia($product);
-                    $this->productManager->save($product);
-
-                    $this->addFlash('success', 'flash.product.updated');
-                } catch (MediaManagementException $e) {
-                    $this->addFlash('error', $e->getMessage());
-                }
-
-                // TODO : Check if the locale exists and is activated
-                $params = array('id' => $product->getId(), 'dataLocale' => $this->getDataLocale());
-                if ($comparisonLocale = $this->getComparisonLocale()) {
-                    $params['compareWith'] = $comparisonLocale;
-                }
-
-                return $this->redirectAfterEdit($params);
-            } else {
-                $this->addFlash('error', 'flash.product.invalid');
-            }
-        }
-
-        $this->getEventDispatcher()->dispatch(EnrichEvents::POST_EDIT_PRODUCT, new GenericEvent($product));
+        $this->dispatch(EnrichEvents::POST_EDIT_PRODUCT, new GenericEvent($product));
 
         $channels = $this->getRepository('PimCatalogBundle:Channel')->findAll();
         $trees    = $this->productCatManager->getProductCountByTree($product);
 
-        return array(
-            'form'             => $form->createView(),
-            'dataLocale'       => $this->getDataLocale(),
-            'comparisonLocale' => $this->getComparisonLocale(),
-            'channels'         => $channels,
-            'attributesForm'   =>
-                $this->getAvailableAttributesForm($product->getAttributes())->createView(),
-            'product'          => $product,
-            'trees'            => $trees,
-            'created'          => $this->versionManager->getOldestLogEntry($product),
-            'updated'          => $this->versionManager->getNewestLogEntry($product),
-            'locales'          => $this->userContext->getUserLocales(),
-            'createPopin'      => $this->getRequest()->get('create_popin')
+        return $this->getProductEditTemplateParams($form, $product, $channels, $trees);
+    }
+
+    /**
+     * Update product
+     *
+     * @param Request $request
+     * @param integer $id
+     *
+     * @Template("PimEnrichBundle:Product:edit.html.twig")
+     * @AclAncestor("pim_enrich_product_edit")
+     * @return RedirectResponse
+     */
+    public function updateAction(Request $request, $id)
+    {
+        $product = $this->findProductOr404($id);
+
+        $this->productManager->ensureAllAssociationTypes($product);
+
+        $form = $this->createForm(
+            'pim_product_edit',
+            $product,
+            $this->getEditFormOptions($product)
         );
+
+        $form->submit($request, false);
+
+        if ($form->isValid()) {
+            try {
+                $this->productManager->handleMedia($product);
+                $this->productManager->save($product);
+
+                $this->addFlash('success', 'flash.product.updated');
+            } catch (MediaManagementException $e) {
+                $this->addFlash('error', $e->getMessage());
+            }
+
+            // TODO : Check if the locale exists and is activated
+            $params = [
+                'id' => $product->getId(),
+                'dataLocale' => $this->getDataLocale(),
+            ];
+            if ($comparisonLocale = $this->getComparisonLocale()) {
+                $params['compareWith'] = $comparisonLocale;
+            }
+
+            return $this->redirectAfterEdit($params);
+        } else {
+            $this->addFlash('error', 'flash.product.invalid');
+        }
+
+        $channels = $this->getRepository('PimCatalogBundle:Channel')->findAll();
+        $trees    = $this->productCatManager->getProductCountByTree($product);
+
+        return $this->getProductEditTemplateParams($form, $product, $channels, $trees);
     }
 
     /**
@@ -532,10 +549,52 @@ class ProductController extends AbstractDoctrineController
     }
 
     /**
-     * @return EventDispatcherInterface
+     * Get the product edit template parameters
+     *
+     * @param FormInterface    $form
+     * @param ProductInterface $product
+     * @param array            $channels
+     * @param array            $trees
+     *
+     * @return array
      */
-    protected function getEventDispatcher()
+    protected function getProductEditTemplateParams(
+        FormInterface $form,
+        ProductInterface $product,
+        array $channels,
+        array $trees
+    ) {
+        $defaultParameters = array(
+            'form'             => $form->createView(),
+            'dataLocale'       => $this->getDataLocale(),
+            'comparisonLocale' => $this->getComparisonLocale(),
+            'channels'         => $channels,
+            'attributesForm'   =>
+                $this->getAvailableAttributesForm($product->getAttributes())->createView(),
+            'product'          => $product,
+            'trees'            => $trees,
+            'created'          => $this->versionManager->getOldestLogEntry($product),
+            'updated'          => $this->versionManager->getNewestLogEntry($product),
+            'locales'          => $this->userContext->getUserLocales(),
+            'createPopin'      => $this->getRequest()->get('create_popin')
+        );
+
+        $event = new GenericEvent($this, ['parameters' => $defaultParameters]);
+        $this->dispatch(EnrichEvents::PRE_RENDER_PRODUCT_EDIT, $event);
+
+        return $event->getArgument('parameters');
+    }
+
+    /**
+     * Dispatch event if at least one listener is registered for it
+     *
+     * @param string $eventName
+     * @param Event  $event
+     */
+    protected function dispatch($eventName, Event $event)
     {
-        return $this->eventDispatcher;
+        if ($this->eventDispatcher->hasListeners($eventName)) {
+            $this->eventDispatcher->dispatch($eventName, $event);
+        }
     }
 }
