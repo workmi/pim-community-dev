@@ -3,11 +3,9 @@
 namespace Pim\Bundle\TransformBundle\Normalizer\MongoDB;
 
 use Pim\Bundle\CatalogBundle\Model\Association;
+use Pim\Bundle\CatalogBundle\MongoDB\MongoObjectsFactory;
 
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-
-use MongoId;
-use MongoDBRef;
 
 /**
  * Normalize a product association into a MongoDB Document
@@ -18,6 +16,17 @@ use MongoDBRef;
  */
 class AssociationNormalizer implements NormalizerInterface
 {
+    /** @var MongoObjectsFactory */
+    protected $mongoFactory;
+
+    /**
+     * @param MongoObjectsFactory $mongoFactory
+     */
+    public function __construct(MongoObjectsFactory $mongoFactory)
+    {
+        $this->mongoFactory = $mongoFactory;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -35,11 +44,11 @@ class AssociationNormalizer implements NormalizerInterface
         $productCollection = $context[ProductNormalizer::MONGO_COLLECTION_NAME];
 
         $data = [];
-        $data['_id'] = new MongoId;
+        $data['_id'] = $this->mongoFactory->createMongoId();
         $data['associationType'] = $assoc->getAssociationType()->getId();
-        $data['owner'] = MongoDBRef::create($productId, $productCollection);
+        $data['owner'] = $this->mongoFactory->createMongoDBRef($productId, $productCollection);
 
-        $data['products'] = $this->normalizeProducts($assoc->getProducts());
+        $data['products'] = $this->normalizeProducts($assoc->getProducts(), $productCollection);
         $data['groupIds'] = $this->normalizeGroups($assoc->getGroups());
 
         return $data;
@@ -48,15 +57,17 @@ class AssociationNormalizer implements NormalizerInterface
     /**
      * Get the products ids as an array of MongoDBRef
      *
-     * @param ProductInterface[] $products
+     * @param ProductInterface[]|Collection $products
+     * @param string                        $productCollection
      *
      * @return array
      */
-    protected function normalizeProducts($products) {
+    protected function normalizeProducts($products, $productCollection)
+    {
         $data = [];
 
         foreach ($products as $product) {
-            $data[] = MongoDBRef::create($product->getId());
+            $data[] = $this->mongoFactory->createMongoDBRef($product->getId(), $productCollection);
         }
 
         return $data;
@@ -65,11 +76,12 @@ class AssociationNormalizer implements NormalizerInterface
     /**
      * Get the groups ids as an array
      *
-     * @param Group[] $groups
+     * @param Group[]|Collection $groups
      *
      * @return array
      */
-    protected function normalizeGroups($groups) {
+    protected function normalizeGroups($groups)
+    {
         $data = [];
 
         foreach ($groups as $group) {

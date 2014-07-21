@@ -3,13 +3,11 @@
 namespace Pim\Bundle\TransformBundle\Normalizer\MongoDB;
 
 use Pim\Bundle\CatalogBundle\Model\ProductInterface;
+use Pim\Bundle\CatalogBundle\MongoDB\MongoObjectsFactory;
 
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerAwareInterface;
 use Symfony\Component\Serializer\SerializerInterface;
-
-use \MongoId;
-use \MongoDate;
 
 /**
  * A transfomer to normalize a product object into a MongoDB object
@@ -20,6 +18,7 @@ use \MongoDate;
  */
 class ProductNormalizer implements NormalizerInterface, SerializerAwareInterface
 {
+    /** @staticvar string */
     const FORMAT = "mongodb_document";
 
     /** @staticvar string */
@@ -31,14 +30,22 @@ class ProductNormalizer implements NormalizerInterface, SerializerAwareInterface
     /** @var NormalizerInterface */
     protected $normalizer;
 
+    /** @var MongoObjectsFactory */
+    protected $mongoFactory;
+
+    /**
+     * @param MongoObjectsFactory $mongoFactory
+     */
+    public function __construct(MongoObjectsFactory $mongoFactory)
+    {
+        $this->mongoFactory = $mongoFactory;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function setSerializer(SerializerInterface $normalizer)
     {
-        if (!$normalizer instanceof NormalizerInterface) {
-            throw new \LogicException('Serializer must be a normalizer');
-        }
         $this->normalizer = $normalizer;
     }
 
@@ -55,19 +62,27 @@ class ProductNormalizer implements NormalizerInterface, SerializerAwareInterface
      */
     public function normalize($product, $format = null, array $context = [])
     {
+        if (!$this->normalizer instanceof NormalizerInterface) {
+            throw new \LogicException('Serializer must be a normalizer');
+        }
+
         $data = [];
 
-        $data[self::MONGO_ID] = null !== $product->getId() ? new MongoId($product->getId()) : new MongoId();
+        if (null !== $product->getId()) {
+            $data[self::MONGO_ID] = $this->mongoFactory->createMongoId($product->getId());
+        } else {
+            $data[self::MONGO_ID] = $this->mongoFactory->createMongoId();
+        }
 
         $context[self::MONGO_ID] = $data[self::MONGO_ID];
 
         if (null !== $product->getCreated()) {
             $data['created'] = $this->normalizer->normalize($product->getCreated(), self::FORMAT, $context);
         } else {
-            $data['created'] = new \MongoDate();
+            $data['created'] = $this->mongoFactory->createMongoDate();
         }
 
-        $data['updated'] = new \MongoDate();
+        $data['updated'] = $this->mongoFactory->createMongoDate();
 
         $data['family']         = $product->getFamily() ? $product->getFamily()->getId() : null;
         $data['enabled']        = $product->isEnabled();
@@ -87,8 +102,8 @@ class ProductNormalizer implements NormalizerInterface, SerializerAwareInterface
     /**
      * Normalize the values of the product to MongoDB objects
      *
-     * @param ArrayCollection $values
-     * @param array           $context
+     * @param ProductValue[]|Collection $values
+     * @param array                     $context
      *
      * @return array
      */
@@ -109,7 +124,7 @@ class ProductNormalizer implements NormalizerInterface, SerializerAwareInterface
     /**
      * Normalize the associations of the product
      *
-     * @param Association[] $associations
+     * @param Association[]|Collection $associations
      *
      * @return array
      */
@@ -130,7 +145,7 @@ class ProductNormalizer implements NormalizerInterface, SerializerAwareInterface
     /**
      * Normalize the groups of the product
      *
-     * @param Group[] $groups
+     * @param Group[]|Collection $groups
      *
      * @return array
      */
@@ -148,7 +163,7 @@ class ProductNormalizer implements NormalizerInterface, SerializerAwareInterface
     /**
      * Normalize the categories of the product
      *
-     * @param Category[] $categories
+     * @param Category[]|Collection $categories
      *
      * @return array
      */
