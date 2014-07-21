@@ -15,6 +15,7 @@
 ## Bug fixes
 - replace usage of Symfony process to launch background job with a simple exec, more reliable on a heavily loaded environment
 - add missing translation keys for "manage filters", "all", "records", etc
+- Product completeness in MongoDB is not lost anymore in the grid
 
 ## BC breaks
 - Remove FlexibleEntityBundle
@@ -27,6 +28,7 @@
 - Changed the HydratorInterface::hydrate() method signature
 - Avoid to store null values in Product::normalizedData (MongoDB support)
 - Remove redundant 'getActiveCodeChoices' method in CurrencyManager (use CurrencyManager::getActiveCodes())
+- Remove the flush parameter from Pim\Bundle\CatalogBundle\Doctrine\MongoDB\CompletenessGenerator::generateMissingForProduct(), as it was not used properly anymore (completeness are directly pushed to MongoDB without using ODM)
 
 # 1.1.0 - "Rabbit Punch" (2014-04-16)
 
