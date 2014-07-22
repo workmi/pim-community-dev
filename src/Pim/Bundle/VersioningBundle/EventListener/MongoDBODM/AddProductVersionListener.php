@@ -158,14 +158,14 @@ class AddProductVersionListener implements EventSubscriber
      */
     protected function applyChangeSet(Version $version)
     {
-        $manager = $this->registry->getManagerForClass(get_class($version));
+        $om = $this->registry->getManagerForClass(get_class($version));
 
         if ($version->getChangeset()) {
             $om->persist($version);
             $om->getUnitOfWork()->computeChangeSet($om->getClassMetadata(get_class($version)), $version);
             $om->flush($version);
         } else {
-            $manager->remove($version);
+            $om->remove($version);
         }
     }
 }
