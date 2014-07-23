@@ -15,7 +15,8 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(
  *      name="pim_versioning_version",
  *      indexes={
- *          @ORM\Index(name="resource_name_resource_id_idx", columns={"resource_name", "resource_id"})
+ *          @ORM\Index(name="resource_name_resource_id_idx", columns={"resource_name", "resource_id"}),
+ *          @ORM\Index(name="pending", columns={"pending"})
  *      }
  * )
  */

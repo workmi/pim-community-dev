@@ -56,18 +56,29 @@ class RefreshCommand extends ContainerAwareCommand
             $logger = $this->getContainer()->get('logger');
             $logger->pushHandler(new StreamHandler('php://stdout'));
         }
+        $totalPendings = (int) $this->getVersionManager()
+            ->getVersionRepository()
+            ->getPendingVersionsCount();
+
+        if ($totalPendings === 0) {
+            $output->writeln('<info>Versioning is already up to date.</info>');
+            return;
+        }
+
+        $progress = $this->getHelperSet()->get('progress');
+        $progress->start($output, $totalPendings);
+
+        $batchSize = $input->getOption('batch-size');
 
         $em = $this->getEntityManager();
-        $pendingVersions = $this->getVersionManager()->getVersionRepository()->getPendingVersions();
-        $nbPendings = count($pendingVersions);
-        if ($nbPendings === 0) {
-            $output->writeln('<info>Versioning is already up to date.</info>');
 
-        } else {
-            $progress = $this->getHelperSet()->get('progress');
-            $ind = 0;
-            $batchSize = $input->getOption('batch-size');
-            $progress->start($output, $nbPendings);
+        $pendingVersions = $this->getVersionManager()
+            ->getVersionRepository()
+            ->getPendingVersions($batchSize);
+
+        $nbPendings = count($pendingVersions);
+
+        while ($nbPendings > 0) {
 
             $previousVersions = [];
             foreach ($pendingVersions as $pending) {
@@ -80,18 +91,19 @@ class RefreshCommand extends ContainerAwareCommand
                     $previousVersions[$key] = $version;
                 }
 
-                $ind++;
-                if (($ind % $batchSize) == 0) {
-                    $em->flush();
-                    $em->clear('Pim\\Bundle\\VersioningBundle\\Entity\\Version');
-                    $previousVersions = [];
-                }
                 $progress->advance();
+
             }
-            $progress->finish();
-            $output->writeln(sprintf('<info>%d created versions.</info>', $nbPendings));
             $em->flush();
+            $em->clear('Pim\\Bundle\\VersioningBundle\\Entity\\Version');
+
+            $pendingVersions = $this->getVersionManager()
+                ->getVersionRepository()
+                ->getPendingVersions($batchSize);
+            $nbPendings = count($pendingVersions);
         }
+        $progress->finish();
+        $output->writeln(sprintf('<info>%d created versions.</info>', $totalPendings));
     }
 
     /**

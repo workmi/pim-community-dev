@@ -59,10 +59,26 @@ class VersionRepository extends EntityRepository
     /**
      * Get pending versions
      *
+     * @param int $limit
+     *
      * @return Version[]
      */
-    public function getPendingVersions()
+    public function getPendingVersions($limit)
     {
-        return $this->findBy(['pending' => true], ['loggedAt' => 'asc']);
+        return $this->findBy(['pending' => true], ['loggedAt' => 'asc'], $limit);
+    }
+
+    /**
+     * Get total pending versions count
+     *
+     * @return int
+     */
+    public function getPendingVersionsCount()
+    {
+        $qb = $this->createQueryBuilder('v')
+            ->select('COUNT(v.id)')
+            ->where('v.pending = true');
+
+        return $qb->getQuery()->getSingleScalarResult();
     }
 }
