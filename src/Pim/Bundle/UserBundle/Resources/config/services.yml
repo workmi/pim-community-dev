@@ -6,12 +6,11 @@ parameters:
     pim_user.context.user.class:                     Pim\Bundle\UserBundle\Context\UserContext
     pim_user.event_listener.user_preferences.class:  Pim\Bundle\UserBundle\EventListener\UserPreferencesListener
     pim_user.form.subscriber.user_preferences.class: Pim\Bundle\UserBundle\Form\Subscriber\UserPreferencesSubscriber
+    pim_user.event_subscriber.group.class:           Pim\Bundle\UserBundle\EventSubscriber\GroupSubscriber
 
 services:
     pim_user.form.type.acl_collection:
         class: %pim_user.form.type.acl_collection.class%
-        arguments:
-            - '@pim_catalog.manager.locale'
         tags:
             - { name: form.type, alias: oro_acl_collection }
 
@@ -19,7 +18,6 @@ services:
         class: %pim_user.context.user.class%
         arguments:
             - '@security.context'
-            - '@oro_security.security_facade'
             - '@pim_catalog.manager.locale'
             - '@pim_catalog.manager.channel'
             - '@pim_catalog.manager.category'
@@ -34,6 +32,8 @@ services:
             - '@security.context'
             - '@request'
             - '@pim_user.form.subscriber.user_preferences'
+            - '@pim_user.repository.role'
+            - '@pim_user.repository.group'
         tags:
             - { name: form.type, alias: oro_user_user }
 
@@ -48,3 +48,8 @@ services:
             - [ setContainer, [ '@service_container' ] ]
         tags:
             - { name: doctrine.event_subscriber }
+
+    pim_user.event_subscriber.group:
+        class: %pim_user.event_subscriber.group.class%
+        tags:
+            - { name: kernel.event_subscriber }

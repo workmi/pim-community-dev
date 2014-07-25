@@ -4,6 +4,9 @@ namespace Pim\Bundle\VersioningBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Oro\Bundle\EntityBundle\DependencyInjection\Compiler\DoctrineOrmMappingsPass;
+use Pim\Bundle\CatalogBundle\PimCatalogBundle;
+use Pim\Bundle\TransformBundle\DependencyInjection\Compiler\SerializerPass;
 use Pim\Bundle\VersioningBundle\DependencyInjection\Compiler;
 
 /**
@@ -20,9 +23,31 @@ class PimVersioningBundle extends Bundle
      */
     public function build(ContainerBuilder $container)
     {
-        parent::build($container);
-
         $container
-            ->addCompilerPass(new Compiler\RegisterUpdateGuessersPass());
+            ->addCompilerPass(new Compiler\RegisterUpdateGuessersPass())
+            ->addCompilerPass(new SerializerPass('pim_versioning.serializer'));
+
+        $versionMappings = [
+            realpath(__DIR__ . '/Resources/config/model/doctrine') => 'Pim\Bundle\VersioningBundle\Model'
+        ];
+
+        $container->addCompilerPass(
+            DoctrineOrmMappingsPass::createYamlMappingDriver(
+                $versionMappings,
+                ['doctrine.orm.entity_manager'],
+                'pim_catalog.storage_driver.doctrine/orm'
+            )
+        );
+
+        if (class_exists(PimCatalogBundle::DOCTRINE_MONGODB)) {
+            $mongoDBClass = PimCatalogBundle::DOCTRINE_MONGODB;
+            $container->addCompilerPass(
+                $mongoDBClass::createYamlMappingDriver(
+                    $versionMappings,
+                    ['doctrine.odm.mongodb.document_manager'],
+                    'pim_catalog.storage_driver.doctrine/mongodb-odm'
+                )
+            );
+        }
     }
 }

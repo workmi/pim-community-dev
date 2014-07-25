@@ -7,7 +7,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Monolog\Handler\StreamHandler;
-use Pim\Bundle\VersioningBundle\Entity\Version;
+use Pim\Bundle\VersioningBundle\Model\Version;
 
 /**
  * Refresh versioning data
@@ -18,11 +18,6 @@ use Pim\Bundle\VersioningBundle\Entity\Version;
  */
 class RefreshCommand extends ContainerAwareCommand
 {
-    /**
-     * Versioned entities
-     */
-    protected $versionedEntities = array();
-
     /**
      * {@inheritdoc}
      */
@@ -56,18 +51,30 @@ class RefreshCommand extends ContainerAwareCommand
             $logger = $this->getContainer()->get('logger');
             $logger->pushHandler(new StreamHandler('php://stdout'));
         }
+        $totalPendings = (int) $this->getVersionManager()
+            ->getVersionRepository()
+            ->getPendingVersionsCount();
 
-        $em = $this->getEntityManager();
-        $pendingVersions = $this->getVersionManager()->getVersionRepository()->getPendingVersions();
-        $nbPendings = count($pendingVersions);
-        if ($nbPendings === 0) {
+        if ($totalPendings === 0) {
             $output->writeln('<info>Versioning is already up to date.</info>');
 
-        } else {
-            $progress = $this->getHelperSet()->get('progress');
-            $ind = 0;
-            $batchSize = $input->getOption('batch-size');
-            $progress->start($output, $nbPendings);
+            return;
+        }
+
+        $progress = $this->getHelperSet()->get('progress');
+        $progress->start($output, $totalPendings);
+
+        $batchSize = $input->getOption('batch-size');
+
+        $om = $this->getObjectManager();
+
+        $pendingVersions = $this->getVersionManager()
+            ->getVersionRepository()
+            ->getPendingVersions($batchSize);
+
+        $nbPendings = count($pendingVersions);
+
+        while ($nbPendings > 0) {
 
             $previousVersions = [];
             foreach ($pendingVersions as $pending) {
@@ -80,18 +87,19 @@ class RefreshCommand extends ContainerAwareCommand
                     $previousVersions[$key] = $version;
                 }
 
-                $ind++;
-                if (($ind % $batchSize) == 0) {
-                    $em->flush();
-                    $em->clear('Pim\\Bundle\\VersioningBundle\\Entity\\Version');
-                    $previousVersions = [];
-                }
                 $progress->advance();
+
             }
-            $progress->finish();
-            $output->writeln(sprintf('<info>%d created versions.</info>', $nbPendings));
-            $em->flush();
+            $om->flush();
+            $om->clear($this->getVersionClass());
+
+            $pendingVersions = $this->getVersionManager()
+                ->getVersionRepository()
+                ->getPendingVersions($batchSize);
+            $nbPendings = count($pendingVersions);
         }
+        $progress->finish();
+        $output->writeln(sprintf('<info>%d created versions.</info>', $totalPendings));
     }
 
     /**
@@ -105,16 +113,16 @@ class RefreshCommand extends ContainerAwareCommand
         $version = $this->getVersionManager()->buildPendingVersion($version, $previousVersion);
 
         if ($version->getChangeset()) {
-            $this->getEntityManager()->persist($version);
+            $this->getObjectManager()->persist($version);
 
             return $version;
         } else {
-            $this->getEntityManager()->remove($version);
+            $this->getObjectManager()->remove($version);
         }
     }
 
     /**
-     * @return AddVersionListener
+     * @return VersionManager
      */
     protected function getVersionManager()
     {
@@ -122,10 +130,21 @@ class RefreshCommand extends ContainerAwareCommand
     }
 
     /**
-     * @return EntityManager
+     * @return ObjectManager
      */
-    protected function getEntityManager()
+    protected function getObjectManager()
     {
-        return $this->getContainer()->get('doctrine')->getManager();
+        return $this
+            ->getContainer()
+            ->get('pim_catalog.doctrine.smart_manager_registry')
+            ->getManagerForClass($this->getVersionClass());
+    }
+
+    /**
+     * @return string
+     */
+    protected function getVersionClass()
+    {
+        return $this->getContainer()->getParameter('pim_versioning.entity.version.class');
     }
 }

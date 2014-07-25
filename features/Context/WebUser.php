@@ -3,16 +3,11 @@
 namespace Context;
 
 use Behat\MinkExtension\Context\RawMinkContext;
-use Behat\Mink\Exception\ExpectationException;
 use Behat\Mink\Exception\UnsupportedDriverActionException;
 use Behat\Gherkin\Node\TableNode;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Behat\Context\Step;
-use Pim\Bundle\CatalogBundle\Entity\AttributeGroup;
-use Pim\Bundle\CatalogBundle\Entity\Family;
-use Pim\Bundle\CatalogBundle\Entity\Category;
 use Pim\Bundle\CatalogBundle\Model\Product;
-use Behat\Mink\Element\Element;
 use Behat\Behat\Exception\BehaviorException;
 
 /**
@@ -196,7 +191,7 @@ class WebUser extends RawMinkContext
         $this->wait(); // Make sure that the tree is loaded
 
         $parentNode = $this->getCurrentPage()->findCategoryInTree($parent);
-        $childNode = $parentNode->getParent()->find('css', sprintf('li a:contains(%s)', $child));
+        $childNode = $parentNode->getParent()->find('css', sprintf('li a:contains("%s")', $child));
 
         if ($not && $childNode) {
             throw $this->createExpectationException(
@@ -266,6 +261,15 @@ class WebUser extends RawMinkContext
      */
     public function theLocaleSwitcherShouldContainTheFollowingItems(TableNode $table)
     {
+        $linkCount = $this->getPage('Product edit')->countLocaleLinks();
+        $expectedLinkCount = count($table->getHash());
+
+        if ($linkCount !== $expectedLinkCount) {
+            throw $this->createExpectationException(
+                sprintf('Expected to see %d items in the locale switcher, saw %d', $expectedLinkCount, $linkCount)
+            );
+        }
+
         foreach ($table->getHash() as $data) {
             if (!$this->getPage('Product edit')->findLocaleLink($data['language'], $data['label'])) {
                 throw $this->createExpectationException(
@@ -343,12 +347,16 @@ class WebUser extends RawMinkContext
     }
 
     /**
-     * @Given /^the Options section should contain ([^"]*) option$/
+     * @param integer $expectedCount
+     *
+     * @Given /^the Options section should contain ([^"]*) options?$/
      */
-    public function theOptionsSectionShouldContainOption()
+    public function theOptionsSectionShouldContainOption($expectedCount = 1)
     {
-        if (1 !== $count = $this->getCurrentPage()->countOptions()) {
-            throw $this->createExpectationException(sprintf('Expecting to see the 1 option, saw %d.', $count));
+        if ($expectedCount != $count = $this->getCurrentPage()->countOptions()) {
+            throw $this->createExpectationException(
+                sprintf('Expecting to see %d option, saw %d.', $expectedCount, $count)
+            );
         }
     }
 
@@ -441,6 +449,7 @@ class WebUser extends RawMinkContext
      *
      * @Then /^the product (.*) should be empty$/
      * @Then /^the product (.*) should be "([^"]*)"$/
+     * @Then /^the field (.*) should contain "([^"]*)"$/
      */
     public function theProductFieldValueShouldBe($fieldName, $expected = '')
     {
@@ -480,6 +489,12 @@ class WebUser extends RawMinkContext
             sort($expected);
             $actual   = implode(', ', $actual);
             $expected = implode(', ', $expected);
+        } elseif ((null !== $parent = $field->getParent()) && $parent->hasClass('upload-zone')) {
+            # We are dealing with an upload field
+            if (null === $filename = $parent->find('css', '.upload-filename')) {
+                throw new \LogicException('Cannot find filename of upload field');
+            }
+            $actual = $filename->getText();
         } else {
             $actual = $field->getValue();
         }
@@ -487,7 +502,7 @@ class WebUser extends RawMinkContext
         if ($expected != $actual) {
             throw $this->createExpectationException(
                 sprintf(
-                    'Expected product %s to be "%s", but got "%s".',
+                    'Expected product field "%s" to contain "%s", but got "%s".',
                     $fieldName,
                     $expected,
                     $actual
@@ -971,7 +986,7 @@ class WebUser extends RawMinkContext
      */
     public function iShouldNotSeeTheButton($button)
     {
-        if (null === $this->getCurrentPage()->getButton($button)) {
+        if (null !== $this->getCurrentPage()->getButton($button)) {
             throw $this->createExpectationException(
                 sprintf('Button "%s" should not be displayed', $button)
             );

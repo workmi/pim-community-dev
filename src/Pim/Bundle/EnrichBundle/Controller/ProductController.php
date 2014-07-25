@@ -2,22 +2,26 @@
 
 namespace Pim\Bundle\EnrichBundle\Controller;
 
-use Pim\Bundle\EnrichBundle\EnrichEvents;
 use Symfony\Bundle\FrameworkBundle\Templating\EngineInterface;
-use Doctrine\Common\Persistence\ManagerRegistry;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Validator\ValidatorInterface;
+use Symfony\Component\EventDispatcher\Event;
 
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+
+use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Common\Collections\Collection;
 
 use Oro\Bundle\SecurityBundle\Annotation\AclAncestor;
 use Oro\Bundle\SecurityBundle\SecurityFacade;
@@ -33,7 +37,7 @@ use Pim\Bundle\UserBundle\Context\UserContext;
 use Pim\Bundle\VersioningBundle\Manager\VersionManager;
 use Pim\Bundle\EnrichBundle\AbstractController\AbstractDoctrineController;
 use Pim\Bundle\EnrichBundle\Exception\DeleteException;
-use Symfony\Component\EventDispatcher\Event;
+use Pim\Bundle\EnrichBundle\EnrichEvents;
 
 /**
  * Product Controller
@@ -75,11 +79,6 @@ class ProductController extends AbstractDoctrineController
     protected $securityFacade;
 
     /**
-     * @var EventDispatcherInterface
-     */
-    protected $eventDispatcher;
-
-    /**
      * Constant used to redirect to the datagrid when save edit form
      * @staticvar string
      */
@@ -101,6 +100,7 @@ class ProductController extends AbstractDoctrineController
      * @param FormFactoryInterface     $formFactory
      * @param ValidatorInterface       $validator
      * @param TranslatorInterface      $translator
+     * @param EventDispatcherInterface $eventDispatcher
      * @param ManagerRegistry          $doctrine
      * @param ProductManager           $productManager
      * @param CategoryManager          $categoryManager
@@ -108,7 +108,6 @@ class ProductController extends AbstractDoctrineController
      * @param VersionManager           $versionManager
      * @param SecurityFacade           $securityFacade
      * @param ProductCategoryManager   $prodCatManager
-     * @param EventDispatcherInterface $eventDispatcher
      */
     public function __construct(
         Request $request,
@@ -118,14 +117,14 @@ class ProductController extends AbstractDoctrineController
         FormFactoryInterface $formFactory,
         ValidatorInterface $validator,
         TranslatorInterface $translator,
+        EventDispatcherInterface $eventDispatcher,
         ManagerRegistry $doctrine,
         ProductManager $productManager,
         CategoryManager $categoryManager,
         UserContext $userContext,
         VersionManager $versionManager,
         SecurityFacade $securityFacade,
-        ProductCategoryManager $prodCatManager,
-        EventDispatcherInterface $eventDispatcher
+        ProductCategoryManager $prodCatManager
     ) {
         parent::__construct(
             $request,
@@ -135,6 +134,7 @@ class ProductController extends AbstractDoctrineController
             $formFactory,
             $validator,
             $translator,
+            $eventDispatcher,
             $doctrine
         );
 
@@ -144,7 +144,6 @@ class ProductController extends AbstractDoctrineController
         $this->versionManager    = $versionManager;
         $this->securityFacade    = $securityFacade;
         $this->productCatManager = $prodCatManager;
-        $this->eventDispatcher   = $eventDispatcher;
     }
 
     /**
@@ -159,7 +158,7 @@ class ProductController extends AbstractDoctrineController
     public function indexAction(Request $request)
     {
         return array(
-            'locales'    => $this->userContext->getUserLocales(),
+            'locales'    => $this->getUserLocales(),
             'dataLocale' => $this->getDataLocale(),
         );
     }
@@ -189,7 +188,7 @@ class ProductController extends AbstractDoctrineController
                 $this->addFlash('success', 'flash.product.created');
 
                 if ($dataLocale === null) {
-                    $dataLocale = $this->getDataLocale();
+                    $dataLocale = $this->getDataLocaleCode();
                 }
                 $url = $this->generateUrl(
                     'pim_enrich_product_edit',
@@ -203,20 +202,21 @@ class ProductController extends AbstractDoctrineController
 
         return array(
             'form'       => $form->createView(),
-            'dataLocale' => $this->getDataLocale()
+            'dataLocale' => $this->getDataLocaleCode()
         );
     }
 
     /**
      * Edit product
      *
+     * @param Request $request
      * @param integer $id
      *
      * @Template
      * @AclAncestor("pim_enrich_product_edit")
      * @return array
      */
-    public function editAction($id)
+    public function editAction(Request $request, $id)
     {
         $product = $this->findProductOr404($id);
 
@@ -233,9 +233,38 @@ class ProductController extends AbstractDoctrineController
         $this->dispatch(EnrichEvents::POST_EDIT_PRODUCT, new GenericEvent($product));
 
         $channels = $this->getRepository('PimCatalogBundle:Channel')->findAll();
-        $trees    = $this->productCatManager->getProductCountByTree($product);
+        $trees    = $this->getProductCountByTree($product);
 
         return $this->getProductEditTemplateParams($form, $product, $channels, $trees);
+    }
+
+    /**
+     * Toggle product status (enabled/disabled)
+     *
+     * @param Request $request
+     * @param integer $id
+     *
+     * @return Response|RedirectResponse
+     *
+     * @AclAncestor("pim_enrich_product_edit")
+     */
+    public function toggleStatusAction(Request $request, $id)
+    {
+        $product = $this->findProductOr404($id);
+
+        $toggledStatus = !$product->isEnabled();
+        $product->setEnabled($toggledStatus);
+        $this->productManager->saveProduct($product);
+
+        $successMessage = $toggledStatus ? 'flash.product.enabled' : 'flash.product.disabled';
+
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse(
+                ['successful' => true, 'message' => $this->translator->trans($successMessage)]
+            );
+        } else {
+            return $this->redirectToRoute('pim_enrich_product_index');
+        }
     }
 
     /**
@@ -272,10 +301,9 @@ class ProductController extends AbstractDoctrineController
                 $this->addFlash('error', $e->getMessage());
             }
 
-            // TODO : Check if the locale exists and is activated
             $params = [
                 'id' => $product->getId(),
-                'dataLocale' => $this->getDataLocale(),
+                'dataLocale' => $this->getDataLocaleCode(),
             ];
             if ($comparisonLocale = $this->getComparisonLocale()) {
                 $params['compareWith'] = $comparisonLocale;
@@ -343,7 +371,7 @@ class ProductController extends AbstractDoctrineController
      * @param integer $id      The product id to which add attributes
      *
      * @AclAncestor("pim_enrich_product_add_attribute")
-     * @return Symfony\Component\HttpFoundation\RedirectResponse
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
     public function addAttributesAction(Request $request, $id)
     {
@@ -375,7 +403,7 @@ class ProductController extends AbstractDoctrineController
     public function removeAction(Request $request, $id)
     {
         $product = $this->findProductOr404($id);
-        $this->remove($product);
+        $this->productManager->remove($product);
         if ($request->isXmlHttpRequest()) {
             return new Response('', 204);
         } else {
@@ -437,9 +465,34 @@ class ProductController extends AbstractDoctrineController
         if ($product !== null) {
             $categories = $product->getCategories();
         }
-        $trees = $this->categoryManager->getFilledTree($parent, $categories);
+        $trees = $this->getFilledTree($parent, $categories);
 
         return array('trees' => $trees, 'categories' => $categories);
+    }
+
+    /**
+     * Fetch the filled tree
+     *
+     * @param CategoryInterface $parent
+     * @param Collection        $categories
+     *
+     * @return CategoryInterface[]
+     */
+    protected function getFilledTree(CategoryInterface $parent, Collection $categories)
+    {
+        return $this->categoryManager->getFilledTree($parent, $categories);
+    }
+
+    /**
+     * Fetch the product count by tree
+     *
+     * @param ProductInterface $product
+     *
+     * @return []
+     */
+    protected function getProductCountByTree(ProductInterface $product)
+    {
+        return $this->productCatManager->getProductCountByTree($product);
     }
 
     /**
@@ -448,10 +501,18 @@ class ProductController extends AbstractDoctrineController
     protected function redirectToRoute($route, $parameters = array(), $status = 302)
     {
         if (!isset($parameters['dataLocale'])) {
-            $parameters['dataLocale'] = $this->getDataLocale();
+            $parameters['dataLocale'] = $this->getDataLocaleCode();
         }
 
         return parent::redirectToRoute($route, $parameters, $status);
+    }
+
+    /**
+     * @return Locale[]
+     */
+    protected function getUserLocales()
+    {
+        return $this->userContext->getUserLocales();
     }
 
     /**
@@ -461,9 +522,21 @@ class ProductController extends AbstractDoctrineController
      *
      * @return string
      */
-    protected function getDataLocale()
+    protected function getDataLocaleCode()
     {
         return $this->userContext->getCurrentLocaleCode();
+    }
+
+    /**
+     * Get data locale object
+     *
+     * @throws \Exception
+     *
+     * @return string
+     */
+    protected function getDataLocale()
+    {
+        return $this->userContext->getCurrentLocale();
     }
 
     /**
@@ -473,7 +546,7 @@ class ProductController extends AbstractDoctrineController
     {
         $locale = $this->getRequest()->query->get('compareWith');
 
-        if ($this->getDataLocale() !== $locale) {
+        if ($this->getDataLocaleCode() !== $locale) {
             return $locale;
         }
     }
@@ -483,9 +556,9 @@ class ProductController extends AbstractDoctrineController
      *
      * @param integer $id the product id
      *
-     * @return Pim\Bundle\CatalogBundle\Model\ProductInterface
+     * @return \Pim\Bundle\CatalogBundle\Model\ProductInterface
      *
-     * @throws Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
     protected function findProductOr404($id)
     {
@@ -506,7 +579,7 @@ class ProductController extends AbstractDoctrineController
      * @param array               $attributes          The attributes
      * @param AvailableAttributes $availableAttributes The available attributes container
      *
-     * @return Symfony\Component\Form\Form
+     * @return \Symfony\Component\Form\Form
      */
     protected function getAvailableAttributesForm(
         array $attributes = array(),
@@ -531,7 +604,7 @@ class ProductController extends AbstractDoctrineController
         return array(
             'enable_family'    => $this->securityFacade->isGranted('pim_enrich_product_change_family'),
             'enable_state'     => $this->securityFacade->isGranted('pim_enrich_product_change_state'),
-            'currentLocale'    => $this->getDataLocale(),
+            'currentLocale'    => $this->getDataLocaleCode(),
             'comparisonLocale' => $this->getComparisonLocale(),
         );
     }
@@ -566,7 +639,7 @@ class ProductController extends AbstractDoctrineController
     ) {
         $defaultParameters = array(
             'form'             => $form->createView(),
-            'dataLocale'       => $this->getDataLocale(),
+            'dataLocale'       => $this->getDataLocaleCode(),
             'comparisonLocale' => $this->getComparisonLocale(),
             'channels'         => $channels,
             'attributesForm'   =>
@@ -575,7 +648,7 @@ class ProductController extends AbstractDoctrineController
             'trees'            => $trees,
             'created'          => $this->versionManager->getOldestLogEntry($product),
             'updated'          => $this->versionManager->getNewestLogEntry($product),
-            'locales'          => $this->userContext->getUserLocales(),
+            'locales'          => $this->getUserLocales(),
             'createPopin'      => $this->getRequest()->get('create_popin')
         );
 

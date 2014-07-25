@@ -23,6 +23,7 @@ use Akeneo\Bundle\BatchBundle\Item\UploadedFileAwareInterface;
 
 use Pim\Bundle\EnrichBundle\AbstractController\AbstractDoctrineController;
 use Pim\Bundle\EnrichBundle\Form\Type\UploadType;
+use Pim\Bundle\ImportExportBundle\Factory\JobInstanceFactory;
 use Pim\Bundle\ImportExportBundle\Form\Type\JobInstanceType;
 use Pim\Bundle\ImportExportBundle\JobEvents;
 
@@ -38,9 +39,6 @@ class JobProfileController extends AbstractDoctrineController
     /** @var ConnectorRegistry */
     protected $connectorRegistry;
 
-    /** @var EventDispatcherInterface */
-    protected $eventDispatcher;
-
     /** @var string */
     protected $jobType;
 
@@ -53,6 +51,9 @@ class JobProfileController extends AbstractDoctrineController
     /** @var JobInstanceType */
     protected $jobInstanceType;
 
+    /** @var JobInstanceFactory */
+    protected $jobInstanceFactory;
+
     /**
      * Constructor
      *
@@ -63,13 +64,14 @@ class JobProfileController extends AbstractDoctrineController
      * @param FormFactoryInterface     $formFactory
      * @param ValidatorInterface       $validator
      * @param TranslatorInterface      $translator
+     * @param EventDispatcherInterface $eventDispatcher
      * @param ManagerRegistry          $doctrine
      * @param ConnectorRegistry        $connectorRegistry
-     * @param EventDispatcherInterface $eventDispatcher
      * @param string                   $jobType
      * @param string                   $rootDir
      * @param string                   $environment
      * @param JobInstanceType          $jobInstanceType
+     * @param JobInstanceFactory       $jobInstanceFactory
      */
     public function __construct(
         Request $request,
@@ -79,13 +81,14 @@ class JobProfileController extends AbstractDoctrineController
         FormFactoryInterface $formFactory,
         ValidatorInterface $validator,
         TranslatorInterface $translator,
+        EventDispatcherInterface $eventDispatcher,
         ManagerRegistry $doctrine,
         ConnectorRegistry $connectorRegistry,
-        EventDispatcherInterface $eventDispatcher,
         $jobType,
         $rootDir,
         $environment,
-        JobInstanceType $jobInstanceType
+        JobInstanceType $jobInstanceType,
+        JobInstanceFactory $jobInstanceFactory
     ) {
         parent::__construct(
             $request,
@@ -95,17 +98,19 @@ class JobProfileController extends AbstractDoctrineController
             $formFactory,
             $validator,
             $translator,
+            $eventDispatcher,
             $doctrine
         );
 
         $this->connectorRegistry = $connectorRegistry;
-        $this->eventDispatcher   = $eventDispatcher;
         $this->jobType           = $jobType;
         $this->rootDir           = $rootDir;
         $this->environment       = $environment;
 
         $this->jobInstanceType   = $jobInstanceType;
         $this->jobInstanceType->setJobType($this->jobType);
+
+        $this->jobInstanceFactory = $jobInstanceFactory;
     }
 
     /**
@@ -117,7 +122,7 @@ class JobProfileController extends AbstractDoctrineController
      */
     public function createAction(Request $request)
     {
-        $jobInstance = new JobInstance(null, $this->getJobType(), null);
+        $jobInstance = $this->jobInstanceFactory->createJobInstance(null, $this->getJobType(), null);
         $form = $this->createForm($this->jobInstanceType, $jobInstance);
 
         if ($request->isMethod('POST')) {
@@ -162,6 +167,8 @@ class JobProfileController extends AbstractDoctrineController
 
             return $this->redirectToIndexView();
         }
+
+        $this->eventDispatcher->dispatch(JobEvents::PRE_SHOW_JOB_PROFILE, new GenericEvent($jobInstance));
 
         $form = $this->createForm($this->jobInstanceType, $jobInstance, ['disabled' => true]);
         $uploadAllowed = false;
@@ -266,6 +273,8 @@ class JobProfileController extends AbstractDoctrineController
                 return $this->redirectToIndexView();
             }
         }
+
+        $this->eventDispatcher->dispatch(JobEvents::PRE_REMOVE_JOB_PROFILE, new GenericEvent($jobInstance));
 
         $this->remove($jobInstance);
 
@@ -375,21 +384,23 @@ class JobProfileController extends AbstractDoctrineController
 
         $job = $jobInstance->getJob();
         foreach ($job->getSteps() as $step) {
-            $reader = $step->getReader();
+            if (method_exists($step, 'getReader')) {
+                $reader = $step->getReader();
 
-            if ($reader instanceof UploadedFileAwareInterface) {
-                $constraints = $reader->getUploadedFileConstraints();
-                $errors = $this->getValidator()->validateValue($file, $constraints);
+                if ($reader instanceof UploadedFileAwareInterface) {
+                    $constraints = $reader->getUploadedFileConstraints();
+                    $errors = $this->getValidator()->validateValue($file, $constraints);
 
-                if ($errors->count() !== 0) {
-                    foreach ($errors as $error) {
-                        $this->addFlash('error', $error->getMessage());
+                    if ($errors->count() !== 0) {
+                        foreach ($errors as $error) {
+                            $this->addFlash('error', $error->getMessage());
+                        }
+
+                        return false;
+                    } else {
+                        $reader->setUploadedFile($file);
+                        $success = true;
                     }
-
-                    return false;
-                } else {
-                    $reader->setUploadedFile($file);
-                    $success = true;
                 }
             }
         }

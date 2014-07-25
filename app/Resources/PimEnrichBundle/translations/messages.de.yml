@@ -131,6 +131,9 @@ flash:
     removed: Attributgruppe erfolgreich entfernt
     attributes added: Attribute erfolgreich zur Attributgruppe hinzugefügt
     attribute removed: Attribute erfolgreich aus der Attributgruppe entfernt
+    not removed attributes: Die Attributgruppe kann nicht gelöscht werden, solange sie Attribute enthält
+    not removed default: Die Standard Attributgruppe kann nicht gelöscht werden
+    not removed default attributes: Die Attribute können nicht aus der Standard Attributgruppe entfernt werden
   category:
     created: Kategorie erfolgreich angelegt
     updated: Kategorie erfolgreich aktualisiert
@@ -163,6 +166,8 @@ flash:
     attributes added: Attribute erfolgreich dem Produkt hinzugefügt
     attribute removed: Attribut erfolgreich aus dem Produkt entfernt
     attribute not removable: Das Attribut kann nicht von diesem Produkt entfernt werden
+    enabled: Produkt wurde aktiviert
+    disabled: Produkt wurde deaktiviert
   group:
     created: Gruppe erfolgreich angelegt
     updated: Gruppe erfolgreich aktualisiert
@@ -283,6 +288,7 @@ Close: Schließen
 Choose a color: Wählen Sie eine Farbe
 Search: Suche
 Choose the attribute type: Wählen Sie den Attributtyp aus
+Choose the attribute group: Wählen Sie die Attributgruppe
 Drop a file or click here: Datei hierhin ziehen oder klicken
 Drop an image or click here: Bild hierhin ziehen oder klicken
 Automatic option sorting: Option automatisch sortieren
@@ -382,6 +388,30 @@ pim_catalog_metric: Maßeinheit
 Activated: Aktiviert
 Disable: Deaktivieren
 pim_enrich.mass_edit_action:
+  product:
+    page_title: Produkte
+    page_subtitle: 'Massenbearbeitung (1 Produkt)|Massenbearbeitung (%count% Produkte)'
+    title: Aktion auswählen
+    subtitle: 'Wählen Sie die Aktion aus, die Sie auf das ausgewählte Produkt anwenden wollen|Wählen Sie die Aktion aus, die Sie auf die ausgewählten %count% Produkte anwenden wollen'
+    confirm: 'Sie sind dabei ein Produkt mit den folgenden Informationen zu aktualisieren - bitte bestätigten Sie den Vorgang.|Sie sind dabei %count% Produkte mit den folgenden Informationen zu aktualisieren - bitte bestätigten Sie den Vorgang.|.'
+    limit_exceeded: 'Bitte wählen Sie weniger als %limit% Produkte für die Bearbeitung aus'
+    steps:
+      first: Produkte auswählen
+      second: Aktion auswählen
+      third: Konfigurieren
+      fourth: Bestätigen
+  family:
+    page_title: Produktfamilien
+    page_subtitle: 'Massenbearbeitung (1 Produktfamilie)|Massenbearbeitung (%count% Produktfamilien)'
+    title: Aktion auswählen
+    subtitle: 'Wählen Sie die Aktion aus, die Sie auf die ausgewählte Produktfamilie anwenden wollen|Wählen Sie die Aktion aus, die Sie auf die ausgewählten %count% Produktfamilien anwenden wollen'
+    confirm: 'Sie sind dabei eine Produktfamilie mit den folgenden Informationen zu aktualisieren - bitte bestätigten Sie den Vorgang.|Sie sind dabei %count% Produktfamilien mit den folgenden Informationen zu aktualisieren - bitte bestätigten Sie den Vorgang.|.'
+    limit_exceeded: 'Bitte wählen Sie weniger als %limit% Produktfamilien für die Bearbeitung aus'
+    steps:
+      first: Produktfamilien auswählen
+      second: Aktion auswählen
+      third: Konfigurieren
+      fourth: Bestätigen
   change-status:
     label: Status ändern (aktivieren / deaktivieren)
     description: Die ausgewählten Produkte werden aktiviert oder deaktiviert.
@@ -403,6 +433,10 @@ pim_enrich.mass_edit_action:
     label: Zu Gruppen hinzufügen
     description: Wählen Sie die Gruppen aus, in welche die ausgewählten Produkte hinzugefügt werden sollen
     success_flash: Die Produkte wurden den ausgewählten Gruppen erfolgreich hinzugefügt
+  set-attribute-requirements:
+    label: Benötigte Attribute auswählen
+    description: Die folgenden benötigten Attribute werden den ausgewählten Produktfamilien zugeordnet
+    success_flash: Die benötigten Attribute wurden den ausgewählten Produktfamilien zugeordnet
 To enable: Um zu aktivieren
 Select attributes: Attribute auswählen
 Select: Auswählen

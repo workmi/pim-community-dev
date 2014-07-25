@@ -1,7 +1,7 @@
 @javascript
 Feature: Browse groups
   In order to manage the user groups and rights
-  As Peter
+  As an administrator
   I need to be able to see user groups
 
   Background:
@@ -11,3 +11,6 @@ Feature: Browse groups
   Scenario: Successfully display groups
     Given I am on the user groups page
     Then the grid should contain 3 elements
+    And I should see "Manager"
+    And I should see "Redactor"
+    And I should see "IT support"
