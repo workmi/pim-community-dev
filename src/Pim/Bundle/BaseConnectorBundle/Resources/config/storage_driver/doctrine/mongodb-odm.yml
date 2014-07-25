@@ -1,6 +1,6 @@
 parameters:
     pim_base_connector.writer.direct_to_db.mongodb.product.class: Pim\Bundle\BaseConnectorBundle\Writer\DirectToDB\MongoDB\ProductWriter
-
+    pim_base_connector.reader.doctrine.product.class: Pim\Bundle\BaseConnectorBundle\Reader\Doctrine\ODMProductReader
 services:
     pim_base_connector.writer.direct_to_db.mongodb.product:
         class: %pim_base_connector.writer.direct_to_db.mongodb.product.class%
@@ -10,4 +10,3 @@ services:
             - '@pim_versioning.doctrine.orm.pending_version_mass_persister'
             - '@pim_serializer'
             - '@pim_transform.cache.product_cache_clearer'
-
