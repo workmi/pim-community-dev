@@ -180,7 +180,7 @@ class FlatProductNormalizer implements NormalizerInterface
             $data = $data->getCode();
         } elseif ($value->getAttribute()->getAttributeType() == 'pim_catalog_price_collection') {
             return $this->normalizePriceCollection($value);
-        } elseif ($data instanceof \Doctrine\Common\Collections\Collection) {
+        } elseif ($data instanceof \Doctrine\Common\Collections\Collection || is_array($data)) {
             $data = $this->normalizeCollectionData($data);
         } elseif ($data instanceof Media) {
             $data = $this->mediaManager->getExportPath($data);
