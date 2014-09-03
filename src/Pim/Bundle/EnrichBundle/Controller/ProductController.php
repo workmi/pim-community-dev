@@ -37,7 +37,7 @@ use Pim\Bundle\UserBundle\Context\UserContext;
 use Pim\Bundle\VersioningBundle\Manager\VersionManager;
 use Pim\Bundle\EnrichBundle\AbstractController\AbstractDoctrineController;
 use Pim\Bundle\EnrichBundle\Exception\DeleteException;
-use Pim\Bundle\EnrichBundle\EnrichEvents;
+use Pim\Bundle\EnrichBundle\Event\ProductEvents;
 
 /**
  * Product Controller
@@ -213,14 +213,14 @@ class ProductController extends AbstractDoctrineController
      * @param integer $id
      *
      * @Template
-     * @AclAncestor("pim_enrich_product_edit")
+     * @AclAncestor("pim_enrich_product_index")
      * @return array
      */
     public function editAction(Request $request, $id)
     {
         $product = $this->findProductOr404($id);
 
-        $this->dispatch(EnrichEvents::PRE_EDIT_PRODUCT, new GenericEvent($product));
+        $this->dispatch(ProductEvents::PRE_EDIT, new GenericEvent($product));
 
         $this->productManager->ensureAllAssociationTypes($product);
 
@@ -230,7 +230,7 @@ class ProductController extends AbstractDoctrineController
             $this->getEditFormOptions($product)
         );
 
-        $this->dispatch(EnrichEvents::POST_EDIT_PRODUCT, new GenericEvent($product));
+        $this->dispatch(ProductEvents::POST_EDIT, new GenericEvent($product));
 
         $channels = $this->getRepository('PimCatalogBundle:Channel')->findAll();
         $trees    = $this->getProductCountByTree($product);
@@ -246,7 +246,7 @@ class ProductController extends AbstractDoctrineController
      *
      * @return Response|RedirectResponse
      *
-     * @AclAncestor("pim_enrich_product_edit")
+     * @AclAncestor("pim_enrich_product_edit_attributes")
      */
     public function toggleStatusAction(Request $request, $id)
     {
@@ -274,7 +274,7 @@ class ProductController extends AbstractDoctrineController
      * @param integer $id
      *
      * @Template("PimEnrichBundle:Product:edit.html.twig")
-     * @AclAncestor("pim_enrich_product_edit")
+     * @AclAncestor("pim_enrich_product_index")
      * @return RedirectResponse
      */
     public function updateAction(Request $request, $id)
@@ -602,6 +602,7 @@ class ProductController extends AbstractDoctrineController
     protected function getEditFormOptions(ProductInterface $product)
     {
         return array(
+            'enable_values'    => $this->securityFacade->isGranted('pim_enrich_product_edit_attributes'),
             'enable_family'    => $this->securityFacade->isGranted('pim_enrich_product_change_family'),
             'enable_state'     => $this->securityFacade->isGranted('pim_enrich_product_change_state'),
             'currentLocale'    => $this->getDataLocaleCode(),
@@ -653,7 +654,7 @@ class ProductController extends AbstractDoctrineController
         );
 
         $event = new GenericEvent($this, ['parameters' => $defaultParameters]);
-        $this->dispatch(EnrichEvents::PRE_RENDER_PRODUCT_EDIT, $event);
+        $this->dispatch(ProductEvents::PRE_RENDER_EDIT, $event);
 
         return $event->getArgument('parameters');
     }

@@ -25,7 +25,8 @@ use Pim\Bundle\EnrichBundle\AbstractController\AbstractDoctrineController;
 use Pim\Bundle\EnrichBundle\Form\Type\UploadType;
 use Pim\Bundle\ImportExportBundle\Factory\JobInstanceFactory;
 use Pim\Bundle\ImportExportBundle\Form\Type\JobInstanceType;
-use Pim\Bundle\ImportExportBundle\JobEvents;
+use Pim\Bundle\ImportExportBundle\Event\JobProfileEvents;
+use Symfony\Component\Process\PhpExecutableFinder;
 
 /**
  * Job Profile controller
@@ -168,7 +169,7 @@ class JobProfileController extends AbstractDoctrineController
             return $this->redirectToIndexView();
         }
 
-        $this->eventDispatcher->dispatch(JobEvents::PRE_SHOW_JOB_PROFILE, new GenericEvent($jobInstance));
+        $this->eventDispatcher->dispatch(JobProfileEvents::PRE_SHOW, new GenericEvent($jobInstance));
 
         $form = $this->createForm($this->jobInstanceType, $jobInstance, ['disabled' => true]);
         $uploadAllowed = false;
@@ -221,7 +222,7 @@ class JobProfileController extends AbstractDoctrineController
             return $this->redirectToIndexView();
         }
 
-        $this->eventDispatcher->dispatch(JobEvents::PRE_EDIT_JOB_PROFILE, new GenericEvent($jobInstance));
+        $this->eventDispatcher->dispatch(JobProfileEvents::PRE_EDIT, new GenericEvent($jobInstance));
 
         $form = $this->createForm($this->jobInstanceType, $jobInstance);
 
@@ -239,7 +240,7 @@ class JobProfileController extends AbstractDoctrineController
             }
         }
 
-        $this->eventDispatcher->dispatch(JobEvents::POST_EDIT_JOB_PROFILE, new GenericEvent($jobInstance));
+        $this->eventDispatcher->dispatch(JobProfileEvents::POST_EDIT, new GenericEvent($jobInstance));
 
         if (null === $template = $jobInstance->getJob()->getEditTemplate()) {
             $template = sprintf('PimImportExportBundle:%sProfile:edit.html.twig', ucfirst($this->getJobType()));
@@ -274,7 +275,7 @@ class JobProfileController extends AbstractDoctrineController
             }
         }
 
-        $this->eventDispatcher->dispatch(JobEvents::PRE_REMOVE_JOB_PROFILE, new GenericEvent($jobInstance));
+        $this->eventDispatcher->dispatch(JobProfileEvents::PRE_REMOVE, new GenericEvent($jobInstance));
 
         $this->remove($jobInstance);
 
@@ -303,7 +304,7 @@ class JobProfileController extends AbstractDoctrineController
             return $this->redirectToIndexView();
         }
 
-        $this->eventDispatcher->dispatch(JobEvents::PRE_EXECUTE_JOB_PROFILE, new GenericEvent($jobInstance));
+        $this->eventDispatcher->dispatch(JobProfileEvents::PRE_EXECUTE, new GenericEvent($jobInstance));
 
         $violations       = $this->getValidator()->validate($jobInstance, array('Default', 'Execution'));
         $uploadViolations = $this->getValidator()->validate($jobInstance, array('Default', 'UploadExecution'));
@@ -316,8 +317,11 @@ class JobProfileController extends AbstractDoctrineController
             $this->persist($jobExecution);
             $instanceCode = $jobExecution->getJobInstance()->getCode();
             $executionId = $jobExecution->getId();
+            $pathFinder = new PhpExecutableFinder();
+
             $cmd = sprintf(
-                'php %s/console akeneo:batch:job --env=%s --email="%s" %s %s %s >> %s/logs/batch_execute.log 2>&1',
+                '%s %s/console akeneo:batch:job --env=%s --email="%s" %s %s %s >> %s/logs/batch_execute.log 2>&1',
+                $pathFinder->find(),
                 $this->rootDir,
                 $this->environment,
                 $this->getUser()->getEmail(),
@@ -330,9 +334,9 @@ class JobProfileController extends AbstractDoctrineController
             // when executed from HTTP request that stop fast (race condition that makes
             // the process cloning fail when the parent process, i.e. HTTP request, stops
             // at the same time)
-            exec($cmd.' &');
+            exec($cmd . ' &', $output);
 
-            $this->eventDispatcher->dispatch(JobEvents::POST_EXECUTE_JOB_PROFILE, new GenericEvent($jobInstance));
+            $this->eventDispatcher->dispatch(JobProfileEvents::POST_EXECUTE, new GenericEvent($jobInstance));
 
             $this->addFlash('success', sprintf('The %s is running.', $this->getJobType()));
 

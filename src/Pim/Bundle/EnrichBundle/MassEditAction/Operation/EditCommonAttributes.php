@@ -4,6 +4,7 @@ namespace Pim\Bundle\EnrichBundle\MassEditAction\Operation;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Pim\Bundle\CatalogBundle\Factory\MetricFactory;
 use Pim\Bundle\UserBundle\Context\UserContext;
 use Pim\Bundle\CatalogBundle\PimCatalogBundle;
 use Pim\Bundle\CatalogBundle\Builder\ProductBuilder;
@@ -13,7 +14,6 @@ use Pim\Bundle\CatalogBundle\Manager\ProductMassActionManager;
 use Pim\Bundle\CatalogBundle\Manager\CurrencyManager;
 use Pim\Bundle\CatalogBundle\Entity\Family;
 use Pim\Bundle\CatalogBundle\Entity\Locale;
-use Pim\Bundle\CatalogBundle\Model\Media;
 use Pim\Bundle\CatalogBundle\Model\Metric;
 use Pim\Bundle\CatalogBundle\Model\ProductInterface;
 use Pim\Bundle\CatalogBundle\Model\ProductPrice;
@@ -59,6 +59,15 @@ class EditCommonAttributes extends ProductMassEditOperation
     /** @var ProductBuilder */
     protected $productBuilder;
 
+    /** @var MetricFactory */
+    protected $metricFactory;
+
+    /** @var string */
+    protected $productPriceClass;
+
+    /** @var string */
+    protected $productMediaClass;
+
     /**
      * Constructor
      *
@@ -68,6 +77,8 @@ class EditCommonAttributes extends ProductMassEditOperation
      * @param CatalogContext           $catalogContext
      * @param ProductBuilder           $productBuilder
      * @param ProductMassActionManager $massActionManager
+     * @param MetricFactory            $metricFactory
+     * @param array                    $classes
      */
     public function __construct(
         ProductManager $productManager,
@@ -75,7 +86,9 @@ class EditCommonAttributes extends ProductMassEditOperation
         CurrencyManager $currencyManager,
         CatalogContext $catalogContext,
         ProductBuilder $productBuilder,
-        ProductMassActionManager $massActionManager
+        ProductMassActionManager $massActionManager,
+        MetricFactory $metricFactory,
+        array $classes
     ) {
         $this->productManager = $productManager;
         $this->userContext = $userContext;
@@ -85,6 +98,9 @@ class EditCommonAttributes extends ProductMassEditOperation
         $this->massActionManager = $massActionManager;
         $this->displayedAttributes = new ArrayCollection();
         $this->values = new ArrayCollection();
+        $this->productPriceClass = $classes['product_price'];
+        $this->productMediaClass = $classes['product_media'];
+        $this->metricFactory = $metricFactory;
     }
 
     /**
@@ -406,7 +422,7 @@ class EditCommonAttributes extends ProductMassEditOperation
      */
     protected function createProductPrice($currency)
     {
-        return new ProductPrice(null, $currency);
+        return new $this->productPriceClass(null, $currency);
     }
 
     /**
@@ -417,7 +433,7 @@ class EditCommonAttributes extends ProductMassEditOperation
     {
         foreach ($value->getPrices() as $price) {
             if (null === $productPrice = $productValue->getPrice($price->getCurrency())) {
-                $this->productBuilder->addPriceForCurrency($productValue, $price->getCurrency());
+                $productPrice = $this->productBuilder->addPriceForCurrency($productValue, $price->getCurrency());
             }
             $productPrice->setData($price->getData());
         }
@@ -453,7 +469,7 @@ class EditCommonAttributes extends ProductMassEditOperation
     protected function setProductFile(ProductValueInterface $productValue, ProductValueInterface $value)
     {
         if (null === $media = $productValue->getMedia()) {
-            $media = new Media();
+            $media = new $this->productMediaClass();
             $productValue->setMedia($media);
         }
         $file = $value->getMedia()->getFile();
@@ -471,8 +487,7 @@ class EditCommonAttributes extends ProductMassEditOperation
     protected function setProductMetric(ProductValueInterface $productValue, ProductValueInterface $value)
     {
         if (null === $metric = $productValue->getMetric()) {
-            $metric = new Metric();
-            $metric->setFamily($value->getAttribute()->getMetricFamily());
+            $metric = $this->metricFactory->createMetric($value->getAttribute()->getMetricFamily());
             $productValue->setMetric($metric);
         }
         $metric->setUnit($value->getMetric()->getUnit());

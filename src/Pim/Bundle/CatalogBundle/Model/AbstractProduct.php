@@ -763,12 +763,23 @@ abstract class AbstractProduct implements ProductInterface, LocalizableInterface
      * @param AbstractAssociation $association
      *
      * @return AbstractProduct
+     * @throws \LogicException
      */
     public function addAssociation(AbstractAssociation $association)
     {
         if (!$this->associations->contains($association)) {
-            $association->setOwner($this);
+            $associationType = $association->getAssociationType();
+            if (null !== $associationType && null !== $this->getAssociationForType($associationType)) {
+                throw new \LogicException(
+                    sprintf(
+                        'Can not add an association of type %s because the product already has one',
+                        $associationType->getCode()
+                    )
+                );
+            }
+
             $this->associations->add($association);
+            $association->setOwner($this);
         }
 
         return $this;
@@ -807,11 +818,25 @@ abstract class AbstractProduct implements ProductInterface, LocalizableInterface
      */
     public function getAssociationForType(AssociationType $type)
     {
-        return $this->associations->filter(
-            function ($association) use ($type) {
-                return $association->getAssociationType() === $type;
+        return $this->getAssociationForTypeCode($type->getCode());
+    }
+
+    /**
+     * Get the product association for an association type code
+     *
+     * @param string $typeCode
+     *
+     * @return AbstractAssociation|null
+     */
+    public function getAssociationForTypeCode($typeCode)
+    {
+        foreach ($this->associations as $association) {
+            if ($association->getAssociationType()->getCode() === $typeCode) {
+                return $association;
             }
-        )->first();
+        }
+
+        return null;
     }
 
     /**

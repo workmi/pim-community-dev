@@ -23,6 +23,7 @@ use Pim\Bundle\CatalogBundle\Entity\Group;
 use Pim\Bundle\CatalogBundle\Model\ProductPrice;
 use Pim\Bundle\CatalogBundle\Model\Media;
 use Pim\Bundle\CatalogBundle\Model\Metric;
+use Pim\Bundle\DataGridBundle\Entity\DatagridView;
 
 /**
  * A context for creating entities
@@ -51,6 +52,7 @@ class FixturesContext extends RawMinkContext
         'multiselect'  => 'pim_catalog_multiselect',
         'simpleselect' => 'pim_catalog_simpleselect',
         'date'         => 'pim_catalog_date',
+        'boolean'      => 'pim_catalog_boolean',
     ];
 
     protected $entities = [
@@ -281,8 +283,7 @@ class FixturesContext extends RawMinkContext
         $this->getProductBuilder()->addMissingProductValues($product);
         $this->getProductManager()->handleMedia($product);
 
-        $this->persist($product);
-        $this->flush();
+        $this->getProductManager()->saveProduct($product, ['recalculate' => false]);
 
         return $product;
     }
@@ -484,6 +485,70 @@ class FixturesContext extends RawMinkContext
         foreach ($table->getHash() as $data) {
             $this->createCategory(array($data));
         }
+    }
+
+    /**
+     * @Given /^the following datagrid views:$/
+     */
+    public function theFollowingDatagridViews(TableNode $table)
+    {
+        foreach ($table->getHash() as $data) {
+            $this->createDatagridView($data);
+        }
+    }
+
+    /**
+     * @param integer $attributeCount
+     * @param string  $filterable
+     * @param string  $type
+     * @param integer $optionCount
+     *
+     * @Given /^(\d+) (filterable )?(simple|multi) select attributes with (\d+) options per attribute$/
+     */
+    public function createSelectAttributesWithOptions($attributeCount, $filterable, $type, $optionCount)
+    {
+        $attCodePattern     = 'attribute_%d';
+        $attLabelPattern    = 'Attribute %d';
+        $optionCodePattern  = 'attribute_%d_option_%d';
+        $optionLabelPattern = 'Option %d for attribute %d';
+
+        $attributeConfig = [
+            'type'                   => $this->getAttributeType($type . 'select'),
+            'group'                  => 'other',
+            'useable_as_grid_filter' => (bool) $filterable
+        ];
+
+        $attributeData = [];
+        $optionData    = [];
+
+        for ($i = 1; $i <= $attributeCount; $i++) {
+            $attributeData[] = [
+                'code'        => sprintf($attCodePattern, $i),
+                'label-en_US' => sprintf($attLabelPattern, $i),
+            ] + $attributeConfig;
+
+            for ($j = 1; $j <= $optionCount; $j++) {
+                $optionData[] = [
+                    'attribute'   => sprintf($attCodePattern, $i),
+                    'code'        => sprintf($optionCodePattern, $i, $j),
+                    'label-en_US' => sprintf($optionLabelPattern, $j, $i)
+                ];
+            }
+        }
+
+        foreach ($attributeData as $index => $data) {
+            $attribute = $this->loadFixture('attributes', $data);
+            $this->persist($attribute, $index % 200 === 0);
+        }
+
+        $this->flush();
+
+        foreach ($optionData as $index => $data) {
+            $option = $this->loadFixture('attribute_options', $data);
+            $this->persist($option, $index % 200 === 0);
+        }
+
+        $this->flush();
     }
 
     /**
@@ -1597,6 +1662,34 @@ class FixturesContext extends RawMinkContext
         $this->persist($attributeGroup);
 
         return $attributeGroup;
+    }
+
+    /**
+     * Create a datagrid view
+     *
+     * @param array $data
+     *
+     * @return DatagridView
+     */
+    protected function createDatagridView(array $data)
+    {
+        $columns = array_map(
+            function ($column) {
+                return trim($column);
+            },
+            explode(',', $data['columns'])
+        );
+
+        $view = new DatagridView();
+        $view->setLabel($data['label']);
+        $view->setDatagridAlias($data['alias']);
+        $view->setFilters(urlencode($data['filters']));
+        $view->setColumns($columns);
+        $view->setOwner($this->getUser('Peter'));
+
+        $this->persist($view);
+
+        return $view;
     }
 
     /**

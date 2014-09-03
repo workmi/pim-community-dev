@@ -90,6 +90,7 @@ datagrid:
                 label: pim.grid.mass_action.delete
                 entity_name: product
                 acl_resource: pim_enrich_product_remove
+                handler: product_mass_delete
                 messages:
                     confirm_title: Delete confirmation
                     confirm_content: Are you sure you want to delete selected products?
@@ -161,10 +162,10 @@ datagrid:
                             multiple: true
                             choices: '@pim_catalog.manager.group->getChoices'
                 enabled:
-                    type:        product_enabled
-                    parent_type: choice
-                    label:       Status
-                    data_name:   enabled
+                    type:      product_enabled
+                    ftype:     choice
+                    label:     Status
+                    data_name: enabled
                     options:
                         field_options:
                             choices:
@@ -186,15 +187,15 @@ datagrid:
                     label:     Complete
                     data_name: ratio
                 created:
-                    type:        product_date
-                    parent_type: date
-                    data_name:   created
-                    label:       Created At
+                    type:      product_date
+                    ftype:     date
+                    data_name: created
+                    label:     Created At
                 updated:
-                    type:        product_date
-                    parent_type: date
-                    data_name:   updated
-                    label:       Updated At
+                    type:      product_date
+                    ftype:     date
+                    data_name: updated
+                    label:     Updated At
             default:
                 category:
                     value:

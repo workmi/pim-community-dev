@@ -8,6 +8,7 @@ parameters:
 
     pim_base_connector.writer.dummy.class: Pim\Bundle\BaseConnectorBundle\Writer\DummyWriter
     pim_base_connector.writer.file.csv.class: Pim\Bundle\BaseConnectorBundle\Writer\File\CsvWriter
+    pim_base_connector.writer.file.csv_product.class: Pim\Bundle\BaseConnectorBundle\Writer\File\CsvProductWriter
 
 services:
     pim_base_connector.writer.file:
@@ -24,6 +25,9 @@ services:
 
     pim_base_connector.writer.file.csv:
         class: %pim_base_connector.writer.file.csv.class%
+
+    pim_base_connector.writer.file.csv_product:
+        class: %pim_base_connector.writer.file.csv_product.class%
         arguments:
             - '@pim_catalog.manager.media'
 
@@ -31,11 +35,8 @@ services:
         class: %pim_base_connector.writer.doctrine.product.class%
         arguments:
             - '@pim_catalog.manager.product'
-            - '@pim_transform.cache.doctrine_cache'
+            - '@pim_transform.cache.product_cache_clearer'
             - '@pim_versioning.manager.version'
-            - '@pim_catalog.doctrine.smart_manager_registry'
-        calls:
-            - [ addNonClearableEntity, [ %pim_catalog.entity.attribute.class% ] ]
 
     pim_base_connector.writer.doctrine.product_association:
         class: %pim_base_connector.writer.doctrine.product_association.class%
@@ -45,6 +46,7 @@ services:
         class: %pim_base_connector.writer.doctrine.class%
         arguments:
             - '@pim_catalog.doctrine.smart_manager_registry'
+            - '@pim_transform.cache.product_cache_clearer'
 
     pim_base_connector.writer.doctrine.association_type: '@pim_base_connector.writer.doctrine'
     pim_base_connector.writer.doctrine.group: '@pim_base_connector.writer.doctrine'

@@ -3,9 +3,9 @@
 namespace Pim\Bundle\CatalogBundle\AttributeType;
 
 use Akeneo\Bundle\MeasureBundle\Manager\MeasureManager;
+use Pim\Bundle\CatalogBundle\Factory\MetricFactory;
 use Pim\Bundle\CatalogBundle\Model\AbstractAttribute;
 use Pim\Bundle\CatalogBundle\Model\ProductValueInterface;
-use Pim\Bundle\CatalogBundle\Model\Metric;
 use Pim\Bundle\CatalogBundle\Validator\ConstraintGuesserInterface;
 
 /**
@@ -17,10 +17,11 @@ use Pim\Bundle\CatalogBundle\Validator\ConstraintGuesserInterface;
  */
 class MetricType extends AbstractAttributeType
 {
-    /**
-     * @var MeasureManager $manager
-     */
+    /** @var MeasureManager $manager */
     protected $manager;
+
+    /** @var MetricFactory $metricFactory */
+    protected $metricFactory;
 
     /**
      * Constructor
@@ -28,17 +29,20 @@ class MetricType extends AbstractAttributeType
      * @param string                     $backendType       the backend type
      * @param string                     $formType          the form type
      * @param ConstraintGuesserInterface $constraintGuesser the form type
-     * @param MeasureManager             $manager           The measure manager
+     * @param MeasureManager             $manager           the measure manager
+     * @param MetricFactory              $metricFactory     the metric factory
      */
     public function __construct(
         $backendType,
         $formType,
         ConstraintGuesserInterface $constraintGuesser,
-        MeasureManager $manager
+        MeasureManager $manager,
+        MetricFactory $metricFactory
     ) {
         parent::__construct($backendType, $formType, $constraintGuesser);
 
         $this->manager = $manager;
+        $this->metricFactory = $metricFactory;
     }
 
     /**
@@ -70,7 +74,7 @@ class MetricType extends AbstractAttributeType
             return $value->getData();
         };
 
-        $data = new Metric();
+        $data = $this->metricFactory->createMetric($value->getAttribute()->getMetricFamily());
         $data->setData($value->getAttribute()->getDefaultValue());
 
         return $data;
@@ -87,11 +91,11 @@ class MetricType extends AbstractAttributeType
             ],
             'numberMin' => [
                 'name'      => 'numberMin',
-                'fieldType' => 'number'
+                'fieldType' => 'pim_number'
             ],
             'numberMax' => [
                 'name'      => 'numberMax',
-                'fieldType' => 'number'
+                'fieldType' => 'pim_number'
             ],
             'decimalsAllowed' => [
                 'name'      => 'decimalsAllowed',

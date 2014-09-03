@@ -185,11 +185,15 @@ class DataGridContext extends RawMinkContext implements PageObjectAwareInterface
     {
         $filters = $this->getMainContext()->listToArray($filters);
         foreach ($filters as $filter) {
-            $filterNode = $this->datagrid->getFilter($filter);
-            if ($filterNode->isVisible()) {
-                throw $this->createExpectationException(
-                    sprintf('Filter "%s" should not be visible', $filter)
-                );
+            try {
+                $filterNode = $this->datagrid->getFilter($filter);
+                if ($filterNode->isVisible()) {
+                    throw $this->createExpectationException(
+                        sprintf('Filter "%s" should not be visible', $filter)
+                    );
+                }
+            } catch (\InvalidArgumentException $e) {
+                // Filter not rendered, all is good
             }
         }
     }
@@ -485,6 +489,10 @@ class DataGridContext extends RawMinkContext implements PageObjectAwareInterface
      */
     public function iFilterBy($filterName, $value)
     {
+        if ($filterName === 'Channel') {
+            $this->wait();
+        }
+
         $operatorPattern = '/^(contains|does not contain|is equal to|(?:starts|ends) with|in list) ([^">=<]*)|^empty$/';
         $datePattern = '/^(more than|less than|between|not between) (\d{4}-\d{2}-\d{2})( and )?(\d{4}-\d{2}-\d{2})?$/';
         $operator = false;
@@ -613,6 +621,7 @@ class DataGridContext extends RawMinkContext implements PageObjectAwareInterface
      */
     public function iClickBackToGrid()
     {
+        $this->wait();
         $this->getSession()->getPage()->clickLink('Back to grid');
         $this->wait();
     }
@@ -747,6 +756,47 @@ class DataGridContext extends RawMinkContext implements PageObjectAwareInterface
     public function iDeleteTheView()
     {
         $this->getCurrentPage()->find('css', '#remove-view')->click();
+        $this->wait();
+    }
+
+    /**
+     * @When /^I create the view:$/
+     */
+    public function iCreateTheView(TableNode $table)
+    {
+        $this->getCurrentPage()->find('css', '#create-view')->click();
+
+        return [
+            new Step\Then('I fill in the following information in the popin:', $table),
+            new Step\Then('I press the "OK" button')
+        ];
+    }
+
+    /**
+     * @When /^I update the view$/
+     */
+    public function iUpdateTheView()
+    {
+        $this->getCurrentPage()->find('css', '#update-view')->click();
+        $this->wait();
+    }
+
+    /**
+     * @Then /^I should( not)? see the "([^"]*)" view$/
+     */
+    public function iShouldSeeTheView($not, $viewLabel)
+    {
+        $view = $this->datagrid->findView($viewLabel);
+
+        if (('' !== $not && null !== $view) || ('' === $not && null === $view)) {
+            throw $this->createExpectationException(
+                sprintf(
+                    'View "%s" should%s be available.',
+                    $viewLabel,
+                    $not
+                )
+            );
+        }
     }
 
     /**

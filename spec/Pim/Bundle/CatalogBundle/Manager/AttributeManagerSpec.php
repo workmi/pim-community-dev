@@ -7,7 +7,7 @@ use Prophecy\Argument;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Doctrine\Common\Persistence\ObjectManager;
 use Pim\Bundle\CatalogBundle\AttributeType\AttributeTypeFactory;
-use Pim\Bundle\CatalogBundle\CatalogEvents;
+use Pim\Bundle\CatalogBundle\Event\AttributeEvents;
 use Pim\Bundle\CatalogBundle\Model\AbstractAttribute;
 
 class AttributeManagerSpec extends ObjectBehavior
@@ -33,15 +33,17 @@ class AttributeManagerSpec extends ObjectBehavior
         );
     }
 
-    function it_instanciates_an_attribute() {
+    function it_instantiates_an_attribute()
+    {
         $this->createAttribute()->shouldReturnAnInstanceOf(self::ATTRIBUTE_CLASS);
     }
 
-    function it_instanciates_an_attribute_option() {
+    function it_instantiates_an_attribute_option()
+    {
         $this->createAttributeOption()->shouldReturnAnInstanceOf(self::OPTION_CLASS);
     }
 
-    function it_instanciates_an_attribute_option_value()
+    function it_instantiates_an_attribute_option_value()
     {
         $this->createAttributeOptionValue()->shouldReturnAnInstanceOf(self::OPT_VALUE_CLASS);
     }
@@ -69,7 +71,7 @@ class AttributeManagerSpec extends ObjectBehavior
         AbstractAttribute $attribute
     ) {
         $eventDispatcher->dispatch(
-            CatalogEvents::PRE_REMOVE_ATTRIBUTE,
+            AttributeEvents::PRE_REMOVE,
             Argument::type('Symfony\Component\EventDispatcher\GenericEvent')
         )->shouldBeCalled();
 

@@ -12,7 +12,7 @@ namespace Pim\Bundle\CatalogBundle;
 class Version
 {
     /** @staticvar string */
-    const VERSION = '1.2.0-DEV';
+    const VERSION = '1.2.0';
 
     /** @staticvar string */
     const VERSION_CODENAME = '';
@@ -24,7 +24,7 @@ class Version
     const MINOR_VERSION = '2';
 
     /** @staticvar string */
-    const PATCH_VERSION = '0';
+    const PATCH_VERSION = '1';
 
     /** @staticvar string */
     const EXTRA_VERSION = '';

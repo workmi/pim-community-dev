@@ -3,6 +3,7 @@
 namespace spec\Pim\Bundle\EnrichBundle\MassEditAction\Operation;
 
 use PhpSpec\ObjectBehavior;
+use Pim\Bundle\CatalogBundle\Factory\MetricFactory;
 use Prophecy\Argument;
 use Doctrine\Common\Collections\ArrayCollection;
 use Pim\Bundle\UserBundle\Context\UserContext;
@@ -30,7 +31,8 @@ class EditCommonAttributesSpec extends ObjectBehavior
         AbstractProductValue $productValue,
         CatalogContext $catalogContext,
         ProductBuilder $productBuilder,
-        ProductMassActionManager $massActionManager
+        ProductMassActionManager $massActionManager,
+        MetricFactory $metricFactory
     ) {
         $en->getCode()->willReturn('en_US');
         $de->getCode()->willReturn('de_DE');
@@ -53,7 +55,12 @@ class EditCommonAttributesSpec extends ObjectBehavior
             $currencyManager,
             $catalogContext,
             $productBuilder,
-            $massActionManager
+            $massActionManager,
+            $metricFactory,
+            [
+                'product_price' => 'Pim\Bundle\CatalogBundle\Model\ProductPrice',
+                'product_media' => 'Pim\Bundle\CatalogBundle\Model\ProductMedia'
+            ]
         );
     }
 

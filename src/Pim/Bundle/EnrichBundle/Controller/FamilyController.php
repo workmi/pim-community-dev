@@ -166,7 +166,7 @@ class FamilyController extends AbstractDoctrineController
      * @param Family $family
      *
      * @Template
-     * @AclAncestor("pim_enrich_family_edit")
+     * @AclAncestor("pim_enrich_family_index")
      * @return array
      */
     public function editAction(Family $family)
@@ -207,7 +207,7 @@ class FamilyController extends AbstractDoctrineController
      * @param Family $family
      *
      * @AclAncestor("pim_enrich_family_remove")
-     * @return Response|RedirectResponse
+     * @return \Symfony\Component\HttpFoundation\Response|\Symfony\Component\HttpFoundation\RedirectResponse
      */
     public function removeAction(Family $family)
     {
@@ -225,8 +225,8 @@ class FamilyController extends AbstractDoctrineController
      *
      * @param Family $family
      *
-     * @AclAncestor("pim_enrich_family_add_attribute")
-     * @return Symfony\Component\HttpFoundation\RedirectResponse
+     * @AclAncestor("pim_enrich_family_edit_attributes")
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
     public function addAttributesAction(Family $family)
     {
@@ -254,7 +254,7 @@ class FamilyController extends AbstractDoctrineController
      * @param integer $familyId
      * @param integer $attributeId
      *
-     * @AclAncestor("pim_enrich_family_remove_atribute")
+     * @AclAncestor("pim_enrich_family_edit_attributes")
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      *
      * @throws DeleteException
@@ -287,7 +287,7 @@ class FamilyController extends AbstractDoctrineController
      * @param array               $attributes          The attributes
      * @param AvailableAttributes $availableAttributes The available attributes container
      *
-     * @return Symfony\Component\Form\Form
+     * @return \Symfony\Component\Form\Form
      */
     protected function getAvailableAttributesForm(
         array $attributes = array(),

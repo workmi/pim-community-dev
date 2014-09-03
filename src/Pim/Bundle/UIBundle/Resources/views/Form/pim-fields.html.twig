@@ -298,7 +298,7 @@
     {% set originalId = id %}
     {% set id         = 'input-' ~ originalId %}
     {% set switchId   = 'switch-' ~ originalId %}
-    <div id="{{ switchId }}" class="switch switch-{{ attr.size is defined ? attr.size : 'small' }}" data-on-label="{{ (attr['data-on-label'] is defined ? attr['data-on-label'] : 'Yes')|trans }}" data-off-label="{{ (attr['data-off-label'] is defined ? attr['data-off-label'] : 'No')|trans }}">
+    <div id="{{ switchId }}" class="switch switch-{{ attr.size is defined ? attr.size : 'small' }}" data-on-label="{{ (attr['data-on-label'] is defined ? attr['data-on-label'] : 'switch_on')|trans }}" data-off-label="{{ (attr['data-off-label'] is defined ? attr['data-off-label'] : 'switch_off')|trans }}">
         {% if required %}{% set required = false %}{% endif %}
         <input id="{{ originalId }}" type="checkbox" {% if value is defined %} value="{{ value }}"{% endif %}{% if checked %} checked="checked"{% endif %}{% if disabled %} disabled="disabled"{% endif %}>
         <input type="hidden" {{ block('widget_attributes') }}{% if checked or attr.checked is defined and attr.checked %} value="1"{% endif %}>
@@ -309,7 +309,7 @@
         function ($) {
             'use strict';
             $(function() {
-                $('#{{ switchId }}').on('switch-change', function (e, data) {
+                $('#{{ switchId }}').closest('form').on('switch-change', '#{{ switchId }}', function (e, data) {
                     $('#{{ id }}').val(+data.value);
                 });
             });
@@ -396,4 +396,61 @@
 
 {% block pim_number_widget %}
     {{ block('number_widget') }}
+{% endblock %}
+
+{% block oro_acl_privilege_widget %}
+    {% spaceless %}
+        {% if 'groups' == privileges_config.view_type %}
+            {% if 'entity' == form.vars.value.extensionKey and '(default)' != form.vars.value.identity.name %}
+                {{ form_widget(form.identity.id) }}
+                {{ form_widget(form.permissions) }}
+            {% else %}
+                <div class="acl-permission{{ form.vars.value.identity.name == '(default)' ? ' default-field' : '' }}">
+                    {{ form_widget(form.identity) }}
+                    {{ form_widget(form.permissions) }}
+                </div>
+            {% endif %}
+        {% else %}
+            <tr class="acl-permission{{ form.vars.value.identity.name == '(default)' ? ' default-field' : '' }}">
+                <td>
+                    {{ form_widget(form.identity) }}
+                </td>
+                {{ form_widget(form.permissions) }}
+            </tr>
+        {% endif %}
+    {% endspaceless %}
+{% endblock %}
+
+{% block oro_acl_permission_widget %}
+    {{ form_widget(form.name) }}
+    {{ form_widget(form.accessLevel) }}
+{% endblock %}
+
+{% block oro_acl_permission_collection_widget %}
+    {% if 'entity' == form.parent.vars.value.extensionKey %}
+        {% for field in privileges_config['permissions'] %}
+            {% for permission in form if permission.vars.value.name == field %}
+                {% set additionalClass = field == 'ASSIGN' or '(default)' == form.parent.vars.value.identity.name ? ' default-field' : '' %}
+                {% if 'entity:Oro\\Bundle\\UserBundle\\Entity\\Role' == form.parent.vars.value.identity.id %}
+                    {% set additionalClass = additionalClass ~ ' default-field-toggle' %}
+                {% endif %}
+                <div class="acl-permission{{ additionalClass }}" data-permission="{{ field }}">
+                    <strong>{{ ('oro_security.acl.' ~ form.parent.vars.value.identity.name ~ '.' ~ field)|lower|trans }}</strong>
+                    {{ form_widget(permission) }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+    {% else %}
+        {% for field in privileges_config['permissions'] %}
+            {% for permission in form if permission.vars.value.name == field %}
+                {{ form_widget(permission) }}
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+
+{% block pim_acl_access_level_selector_widget %}
+    <i class="icon-{{ form.vars.checked ? 'ok ' : 'remove non-' }}granted acl-permission-toggle"></i>
+    {% set attr = attr|merge({ class: 'hide' }) %}
+    {{ block('checkbox_widget') }}
 {% endblock %}

@@ -2,7 +2,7 @@
 
 namespace Pim\Bundle\TransformBundle\Transformer\Property;
 
-use Pim\Bundle\CatalogBundle\Model\Metric;
+use Pim\Bundle\CatalogBundle\Factory\MetricFactory;
 use Pim\Bundle\TransformBundle\Transformer\ColumnInfo\ColumnInfoInterface;
 
 /**
@@ -14,6 +14,17 @@ use Pim\Bundle\TransformBundle\Transformer\ColumnInfo\ColumnInfoInterface;
  */
 class MetricTransformer extends DefaultTransformer implements EntityUpdaterInterface
 {
+    /** @var MetricFactory */
+    protected $metricFactory;
+
+    /**
+     * @param MetricFactory $metricFactory
+     */
+    public function __construct(MetricFactory $metricFactory)
+    {
+        $this->metricFactory = $metricFactory;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -23,9 +34,8 @@ class MetricTransformer extends DefaultTransformer implements EntityUpdaterInter
         $suffix = array_pop($suffixes);
 
         if (!$object->getMetric()) {
-            $metric = new Metric();
+            $metric = $this->metricFactory->createMetric($columnInfo->getAttribute()->getMetricFamily());
             $object->setMetric($metric);
-            $metric->setFamily($columnInfo->getAttribute()->getMetricFamily());
         }
 
         if ('unit' === $suffix) {
