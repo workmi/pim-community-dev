@@ -2,8 +2,7 @@
 
 namespace Pim\Bundle\VersioningBundle;
 
-use Akeneo\Bundle\StorageUtilsBundle\AkeneoStorageUtilsBundle;
-use Oro\Bundle\EntityBundle\DependencyInjection\Compiler\DoctrineOrmMappingsPass;
+use Akeneo\Bundle\StorageUtilsBundle\DependencyInjection\StorageHelper;
 use Pim\Bundle\TransformBundle\DependencyInjection\Compiler\SerializerPass;
 use Pim\Bundle\VersioningBundle\DependencyInjection\Compiler;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -31,23 +30,7 @@ class PimVersioningBundle extends Bundle
             realpath(__DIR__ . '/Resources/config/model/doctrine') => 'Pim\Bundle\VersioningBundle\Model'
         ];
 
-        $container->addCompilerPass(
-            DoctrineOrmMappingsPass::createYamlMappingDriver(
-                $versionMappings,
-                ['doctrine.orm.entity_manager'],
-                'akeneo_storage_utils.storage_driver.doctrine/orm'
-            )
-        );
-
-        if (class_exists(AkeneoStorageUtilsBundle::DOCTRINE_MONGODB)) {
-            $mongoDBClass = AkeneoStorageUtilsBundle::DOCTRINE_MONGODB;
-            $container->addCompilerPass(
-                $mongoDBClass::createYamlMappingDriver(
-                    $versionMappings,
-                    ['doctrine.odm.mongodb.document_manager'],
-                    'akeneo_storage_utils.storage_driver.doctrine/mongodb-odm'
-                )
-            );
-        }
+//        $helper = new StorageHelper($container);
+//        $helper->getMappingsPass('catalog_product', $versionMappings);
     }
 }

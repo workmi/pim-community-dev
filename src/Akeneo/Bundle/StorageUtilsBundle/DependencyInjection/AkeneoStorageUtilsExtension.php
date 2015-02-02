@@ -2,6 +2,7 @@
 
 namespace Akeneo\Bundle\StorageUtilsBundle\DependencyInjection;
 
+use Akeneo\Component\StorageUtils\Storage;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -16,12 +17,15 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  */
 class AkeneoStorageUtilsExtension extends Extension
 {
+    // TODO: to trash
     /** @staticvar string */
     const DOCTRINE_ORM = 'doctrine/orm';
 
+    // TODO: to trash
     /** @staticvar string */
     const DOCTRINE_MONGODB_ODM = 'doctrine/mongodb-odm';
 
+    // TODO: to trash
     /** @var string */
     protected static $storageDriver;
 
@@ -31,20 +35,17 @@ class AkeneoStorageUtilsExtension extends Extension
     public function load(array $configs, ContainerBuilder $container)
     {
         $config = $this->processConfiguration(new Configuration(), $configs);
-        self::$storageDriver = $config['storage_driver'];
 
-        $container->setParameter($this->getAlias() . '.storage_driver', $this->getStorageDriver());
-        // Parameter defining if the mapping driver must be enabled or not
-        $container->setParameter($this->getAlias() . '.storage_driver.' . $this->getStorageDriver(), true);
+        $this->registerStorages($config['storages'], $container);
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('doctrine.yml');
         $loader->load('factories.yml');
-
-        $this->loadStorageDriver($container, __DIR__);
     }
 
     /**
+     * TODO: to trash
+     *
      * @return string
      */
     public static function getStorageDriver()
@@ -53,34 +54,21 @@ class AkeneoStorageUtilsExtension extends Extension
     }
 
     /**
-     * Provides the supported driver for application storage
-     * @return string[]
-     */
-    protected function getSupportedStorageDrivers()
-    {
-        return array(self::DOCTRINE_ORM, self::DOCTRINE_MONGODB_ODM);
-    }
-
-    /**
-     * Load the mapping for application storage
+     * Register the storages parameters in the container
      *
-     * TODO: rename this method
-     *
+     * @param array            $storages
      * @param ContainerBuilder $container
-     * @param string           $path
      */
-    protected function loadStorageDriver(ContainerBuilder $container, $path)
+    private function registerStorages(array $storages, ContainerBuilder $container)
     {
-        if (!in_array($this->getStorageDriver(), $this->getSupportedStorageDrivers())) {
-            throw new \RuntimeException(
-                sprintf(
-                    'The storage driver "%s" is not supported.',
-                    $this->getStorageDriver()
-                )
-            );
-        }
+        $storageParamPattern = $this->getAlias() . '.storage_driver.%s';
+        $driverParamPattern = $this->getAlias() . '.storage_driver.%s.%s';
 
-        $loader = new YamlFileLoader($container, new FileLocator($path . '/../Resources/config'));
-        $loader->load(sprintf('storage_driver/%s.yml', $this->getStorageDriver()));
+        foreach ($storages as $name => $storage) {
+            $container->setParameter(sprintf($storageParamPattern, $name), $storage['driver']);
+            $container->setParameter(sprintf($driverParamPattern, $name, $storage['driver']), true);
+
+            Storage::set($name, $storage['driver']);
+        }
     }
 }

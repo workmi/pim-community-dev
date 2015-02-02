@@ -2,6 +2,7 @@
 
 namespace Akeneo\Bundle\StorageUtilsBundle\DependencyInjection;
 
+use Akeneo\Component\StorageUtils\Storage;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -23,11 +24,26 @@ class Configuration implements ConfigurationInterface
         $rootNode = $treeBuilder->root('akeneo_storage_utils');
 
         $rootNode
-            ->children()
-                ->scalarNode('storage_driver')->defaultValue('doctrine/orm')->end()
-            ->end()
+            ->append($this->getStoragesNode())
         ->end();
 
         return $treeBuilder;
+    }
+
+    private function getStoragesNode()
+    {
+        $treeBuilder = new TreeBuilder();
+        $node = $treeBuilder->root('storages');
+
+        $node
+            ->requiresAtLeastOneElement()
+            ->useAttributeAsKey('name')
+            ->prototype('array')
+            ->children()
+                ->enumNode('driver')->values(Storage::getDrivers())->isRequired()->cannotBeEmpty()->end()
+            ->end()
+        ;
+
+        return $node;
     }
 }

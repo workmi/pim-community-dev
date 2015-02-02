@@ -2,6 +2,7 @@
 
 namespace Pim\Bundle\VersioningBundle\DependencyInjection;
 
+use Akeneo\Bundle\StorageUtilsBundle\DependencyInjection\StorageHelper;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader;
@@ -27,11 +28,15 @@ class PimVersioningExtension extends Extension
         $loader->load('builders.yml');
         $loader->load('event_subscribers.yml');
 
-        $storageDriver = $container->getParameter('akeneo_storage_utils.storage_driver');
-        $storageConfig = sprintf('storage_driver/%s.yml', $storageDriver);
-        if (file_exists(__DIR__ . '/../Resources/config/' . $storageConfig)) {
-            $loader->load($storageConfig);
-        }
+        $helper = new StorageHelper($container);
+        $helper->loadStorageConfigFiles('catalog_product', __DIR__);
+/*
+        $versionMappingsPass = $helper->getMappingsPass(
+            'catalog_product',
+            [ realpath(__DIR__ . '/Resources/config/model/doctrine') => 'Pim\Bundle\VersioningBundle\Model' ]
+        );
+        $container->addCompilerPass($versionMappingsPass);
+*/
 
         $file = __DIR__.'/../Resources/config/pim_versioning_entities.yml';
         $entities = Yaml::parse(realpath($file));

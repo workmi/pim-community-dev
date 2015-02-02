@@ -2,9 +2,11 @@
 
 namespace Pim\Bundle\CatalogBundle\DependencyInjection;
 
-use Akeneo\Bundle\StorageUtilsBundle\DependencyInjection\AkeneoStorageUtilsExtension;
+use Akeneo\Bundle\StorageUtilsBundle\DependencyInjection\StorageHelper;
+use Akeneo\Component\StorageUtils\Storage;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\Finder\Finder;
 
@@ -15,7 +17,7 @@ use Symfony\Component\Finder\Finder;
  * @copyright 2013 Akeneo SAS (http://www.akeneo.com)
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
-class PimCatalogExtension extends AkeneoStorageUtilsExtension
+class PimCatalogExtension extends Extension
 {
     /**
      * {@inheritdoc}
@@ -42,7 +44,6 @@ class PimCatalogExtension extends AkeneoStorageUtilsExtension
         $loader->load('models.yml');
 
         $this->loadValidationFiles($container);
-        $this->loadStorageDriver($container, __DIR__);
     }
 
     /**
