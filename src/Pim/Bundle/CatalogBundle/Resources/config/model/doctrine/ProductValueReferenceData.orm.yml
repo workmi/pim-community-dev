@@ -1,0 +1,35 @@
+Pim\Bundle\CatalogBundle\Model\ProductValueReferenceData:
+    type: entity
+    table: pim_catalog_product_value_reference_data
+    indexes:
+        value_reference_idx:
+            columns:
+                - value_id
+                - reference_data_id
+                - reference_data_type
+    fields:
+        id:
+            type: integer
+            id: true
+            generator:
+                strategy: AUTO
+        referenceDataType:
+            type: string
+            length: 100
+            nullable: true
+            column: reference_data_type
+    manyToOne:
+        productValue:
+            targetEntity: Pim\Bundle\CatalogBundle\Model\ProductValueInterface
+            joinColumns:
+                value_id:
+                    referencedColumnName: id
+                    onDelete: CASCADE
+                    nullable: false
+        referenceData:
+            targetEntity: Pim\Bundle\CatalogBundle\Entity\ReferenceDataInterface
+            joinColumns:
+                reference_data_id:
+                    referencedColumnName: id
+                    onDelete: CASCADE
+                    nullable: false

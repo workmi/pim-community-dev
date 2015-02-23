@@ -124,12 +124,20 @@ abstract class AbstractProductValue implements ProductValueInterface
     protected $prices;
 
     /**
+     * Master data references
+
+     * @var ArrayCollection $referenceData
+     */
+    protected $referenceData;
+
+    /**
      * Constructor
      */
     public function __construct()
     {
         $this->options = new ArrayCollection();
         $this->prices  = new ArrayCollection();
+        $this->referenceData = new ArrayCollection();
     }
 
     /**
@@ -615,5 +623,25 @@ abstract class AbstractProductValue implements ProductValueInterface
         }
 
         return $this->entity->isAttributeRemovable($this->attribute);
+    }
+
+    public function getAllReferenceData()
+    {
+        return $this->referenceData;
+    }
+
+    public function setReferenceData(ArrayCollection $referenceData)
+    {
+        $this->referenceData = $referenceData;
+    }
+
+    public function addReferenceData(ReferenceDataInterface $referenceData)
+    {
+        $this->referenceData->add($referenceData);
+    }
+
+    public function getReferenceData($type)
+    {
+        throw new \Exception('TBI');
     }
 }

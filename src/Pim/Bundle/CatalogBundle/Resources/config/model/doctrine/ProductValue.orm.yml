@@ -135,3 +135,11 @@ Pim\Bundle\CatalogBundle\Model\ProductValue:
                 - refresh
                 - detach
             mappedBy: value
+        referenceData:
+            targetEntity: Pim\Bundle\CatalogBundle\Model\ProductValueReferenceDataInterface
+            cascade:
+                - remove
+                - persist
+                - refresh
+                - detach
+            mappedBy: productValue
