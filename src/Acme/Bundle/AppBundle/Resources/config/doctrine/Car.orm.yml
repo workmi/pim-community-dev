@@ -1,0 +1,20 @@
+Acme\Bundle\AppBundle\Entity\Car:
+    #repositoryClass: Pim\Bundle\CatalogBundle\Doctrine\ORM\Repository\CustomReferentialOptionRepository
+    type: entity
+    table: null
+    id:
+        id:
+            type: integer
+            id: true
+            generator:
+                strategy: AUTO
+    fields:
+        brand:
+            type: string
+            length: 255
+        model:
+            type: string
+            length: 255
+        year:
+            type: integer
+    lifecycleCallbacks: {  }
