@@ -17,4 +17,8 @@ Acme\Bundle\AppBundle\Entity\Car:
             length: 255
         year:
             type: integer
+    oneToMany:
+        data:
+          targetEntity: Pim\Bundle\CatalogBundle\Model\ProductValueReferenceDataInterface
+          mappedBy: car
     lifecycleCallbacks: {  }

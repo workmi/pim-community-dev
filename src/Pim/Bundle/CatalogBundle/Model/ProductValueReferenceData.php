@@ -6,6 +6,9 @@ class ProductValueReferenceData implements ProductValueReferenceDataInterface
 {
     protected $id;
 
+    // TODO: should not be hardcoded
+    protected $car;
+
     /** @var ProductValueInterface */
     protected $productValue;
 

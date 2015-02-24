@@ -7,6 +7,8 @@ Pim\Bundle\CatalogBundle\Model\ProductValueReferenceData:
             id: true
             generator:
                 strategy: AUTO
+    # should not be a one to one as you can have several same referentials (ie Color or Car)
+    # for one product value => multi select
     oneToOne:
         productValue:
             targetEntity: Pim\Bundle\CatalogBundle\Model\ProductValueInterface
@@ -20,3 +22,11 @@ Pim\Bundle\CatalogBundle\Model\ProductValueReferenceData:
                 value_id:
                     referencedColumnName: id
                     onDelete: 'SET NULL'
+    # should not be hardcoded, should be injected via class metadata
+    manyToOne:
+        car:
+            targetEntity: Acme\Bundle\AppBundle\Entity\Car
+            inversedBy: data
+            joinColumn:
+                name: car_id
+                referencedColumnName: id
