@@ -16,6 +16,7 @@ use Pim\Bundle\CatalogBundle\Manager\ProductManager;
 use Pim\Bundle\CatalogBundle\Model\AvailableAttributes;
 use Pim\Bundle\CatalogBundle\Model\CategoryInterface;
 use Pim\Bundle\CatalogBundle\Model\ProductInterface;
+use Pim\Bundle\CatalogBundle\Model\ProductValueInterface;
 use Pim\Bundle\EnrichBundle\AbstractController\AbstractDoctrineController;
 use Pim\Bundle\EnrichBundle\Event\ProductEvents;
 use Pim\Bundle\EnrichBundle\Manager\SequentialEditManager;
@@ -243,6 +244,15 @@ class ProductController extends AbstractDoctrineController
     public function editAction(Request $request, $id)
     {
         $product = $this->findProductOr404($id);
+
+        /** @var ProductValueInterface $value */
+        foreach ($product->getValues() as $value) {
+            if ($value->getReferenceData()) {
+                var_dump($value->getReferenceData());
+            }
+        }
+
+
 
         $this->dispatch(ProductEvents::PRE_EDIT, new GenericEvent($product));
 

@@ -23,10 +23,10 @@ Pim\Bundle\CatalogBundle\Model\ProductValueReferenceData:
                     referencedColumnName: id
                     onDelete: 'SET NULL'
     # should not be hardcoded, should be injected via class metadata
-    manyToOne:
-        car:
-            targetEntity: Acme\Bundle\AppBundle\Entity\Car
-            inversedBy: data
-            joinColumn:
-                name: car_id
-                referencedColumnName: id
+#    manyToOne:
+#        car:
+#            targetEntity: Acme\Bundle\AppBundle\Entity\Car
+#            inversedBy: data
+#            joinColumn:
+#                name: car_id
+#                referencedColumnName: id
