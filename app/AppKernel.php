@@ -31,7 +31,9 @@ class AppKernel extends Kernel
             $this->getOroDependencies(),
             $this->getOroBundles(),
             $this->getPimDependenciesBundles(),
-            $this->getPimBundles()
+            $this->getPimBundles(),
+
+            [new Acme\Bundle\AppBundle\AcmeAppBundle()]
         );
 
         return $bundles;
