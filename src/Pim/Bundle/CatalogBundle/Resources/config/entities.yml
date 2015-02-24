@@ -26,3 +26,4 @@ parameters:
     pim_catalog.entity.product_template.class:            Pim\Bundle\CatalogBundle\Entity\ProductTemplate
     pim_catalog.entity.available_attributes.class:        Pim\Bundle\CatalogBundle\Model\AvailableAttributes
     pim_catalog.entity.product_value_reference_data.class: Pim\Bundle\CatalogBundle\Model\ProductValueReferenceData
+    pim_catalog.entity.reference_data.class: Pim\Bundle\CatalogBundle\Model\ReferenceData

@@ -18,7 +18,7 @@ class ResolveDoctrineTargetModelPass extends AbstractResolveDoctrineTargetModelP
      */
     protected function getParametersMapping()
     {
-        return array(
+        return [
             'Symfony\Component\Security\Core\User\UserInterface'      => 'oro_user.entity.class',
             'Pim\Bundle\CatalogBundle\Model\AssociationInterface'     => 'pim_catalog.entity.association.class',
             'Pim\Bundle\CatalogBundle\Model\AttributeInterface'       => 'pim_catalog.entity.attribute.class',
@@ -35,6 +35,7 @@ class ResolveDoctrineTargetModelPass extends AbstractResolveDoctrineTargetModelP
             'Pim\Bundle\CatalogBundle\Model\ChannelInterface'         => 'pim_catalog.entity.channel.class',
             'Pim\Bundle\CatalogBundle\Model\ProductTemplateInterface' => 'pim_catalog.entity.product_template.class',
             'Pim\Bundle\CatalogBundle\Model\ProductValueReferenceDataInterface' => 'pim_catalog.entity.product_value_reference_data.class',
-        );
+            'Pim\Bundle\CatalogBundle\Model\ReferenceDataInterface' => 'pim_catalog.entity.reference_data.class',
+        ];
     }
 }
