@@ -2,13 +2,14 @@
 
 namespace Acme\Bundle\AppBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
-//use Pim\Bundle\CatalogBundle\Model\ReferenceDataInterface;
+use Pim\Bundle\CatalogBundle\Model\ReferenceDataInterface;
 
 /**
  * Car
  */
-class Car /*implements ReferenceDataInterface*/
+class Car implements ReferenceDataInterface
 {
     /**
      * @var int
@@ -29,6 +30,16 @@ class Car /*implements ReferenceDataInterface*/
      * @var integer
      */
     private $year;
+
+    /**
+     * @var ArrayCollection of ProductValueReferenceDataInterface
+     */
+    private $data;
+
+    public function __construct()
+    {
+        $this->data = new ArrayCollection();
+    }
 
     /**
      * Get id
@@ -122,5 +133,17 @@ class Car /*implements ReferenceDataInterface*/
     public function getType()
     {
         return 'car';
+    }
+
+    public function getProductValueReferenceData()
+    {
+        return $this->data;
+    }
+
+    public function setProductValueReferenceData(ArrayCollection $data)
+    {
+        $this->data = $data;
+
+        return $this;
     }
 }
