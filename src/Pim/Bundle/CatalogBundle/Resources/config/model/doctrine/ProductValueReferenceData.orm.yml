@@ -1,0 +1,22 @@
+Pim\Bundle\CatalogBundle\Model\ProductValueReferenceData:
+    type: entity
+    table: pim_catalog_product_value_reference_data
+    fields:
+        id:
+            type: integer
+            id: true
+            generator:
+                strategy: AUTO
+    oneToOne:
+        productValue:
+            targetEntity: Pim\Bundle\CatalogBundle\Model\ProductValueInterface
+            cascade:
+                - remove
+                - persist
+                - refresh
+                - detach
+            inversedBy: referenceData
+            joinColumns:
+                value_id:
+                    referencedColumnName: id
+                    onDelete: 'SET NULL'

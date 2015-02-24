@@ -124,6 +124,13 @@ abstract class AbstractProductValue implements ProductValueInterface
     protected $prices;
 
     /**
+     * Master data references
+
+     * @var ProductValueReferenceDataInterface $referenceData
+     */
+    protected $referenceData;
+
+    /**
      * Constructor
      */
     public function __construct()
@@ -615,5 +622,15 @@ abstract class AbstractProductValue implements ProductValueInterface
         }
 
         return $this->entity->isAttributeRemovable($this->attribute);
+    }
+
+    public function getReferenceData()
+    {
+        return $this->referenceData;
+    }
+
+    public function setReferenceData(ProductValueReferenceDataInterface $referenceData)
+    {
+        $this->referenceData = $referenceData;
     }
 }

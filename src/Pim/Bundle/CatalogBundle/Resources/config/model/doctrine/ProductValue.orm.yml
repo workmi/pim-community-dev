@@ -126,6 +126,9 @@ Pim\Bundle\CatalogBundle\Model\ProductValue:
                 metric_id:
                     referencedColumnName: id
                     onDelete: 'SET NULL'
+        referenceData:
+            targetEntity: Pim\Bundle\CatalogBundle\Model\ProductValueReferenceDataInterface
+            mappedBy: productValue
     oneToMany:
         prices:
             targetEntity: Pim\Bundle\CatalogBundle\Model\ProductPriceInterface

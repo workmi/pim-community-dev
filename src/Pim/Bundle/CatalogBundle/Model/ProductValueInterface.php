@@ -364,6 +364,10 @@ interface ProductValueInterface
      */
     public function getInteger();
 
+    public function getReferenceData();
+
+    public function setReferenceData(ProductValueReferenceDataInterface $referenceData);
+
     /**
      * @return string
      */
