@@ -36,6 +36,10 @@
                                     'ASC' :
                                     'DESC';
                         }
+
+                        if (undefined != filters.pageSize) {
+                            urlParams['{{ name }}[_pager][_per_page]'] = filters.pageSize;
+                        }
                     }
 
                     if (state.columns) {
