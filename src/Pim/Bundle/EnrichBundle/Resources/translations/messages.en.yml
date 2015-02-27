@@ -907,3 +907,8 @@ oro.locale:
 
 # Datagrid
 Selected products successfully deleted: Selected products successfully deleted
+
+# Errors
+
+pim_enrich.error:
+    exception.title: Oh snap! A %status_code% error occured...
