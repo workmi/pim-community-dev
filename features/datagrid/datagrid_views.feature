@@ -69,3 +69,13 @@ Feature: Datagrid views
     And I should see "Views My default view"
     But I should not see "Boots only"
     And I should see products black-boots, purple-sneakers and black-sneakers
+
+  Scenario: Keep view per page
+    Given I change the page size to 25
+    And I should be on the products page
+    Given I am on the attributes page
+    And I change the page size to 50
+    When I am on the products page
+    Then page size should be 25
+    When I am on the attributes page
+    Then page size should be 50
