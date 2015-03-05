@@ -18,7 +18,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 * @copyright 2015 Akeneo SAS (http://www.akeneo.com)
 * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
 */
-class ChangeStatusHandler extends AbstractConfigurableStepElement implements StepExecutionAwareInterface
+class SingleOperationStepHandler extends AbstractConfigurableStepElement implements StepExecutionAwareInterface
 {
     /** @var ProductQueryBuilderFactoryInterface */
     protected $pqbFactory;
@@ -70,10 +70,10 @@ class ChangeStatusHandler extends AbstractConfigurableStepElement implements Ste
         foreach ($paginator as $productsPage) {
             foreach ($productsPage as $product) {
                 // Todo: Use $this->productUpdater->setValue($product, 'enable', $configuration['data']);
-                $product->setEnabled($configuration['data']);
+                //$product->setEnabled($configuration['data']);
                 $this->stepExecution->incrementSummaryInfo('mass-edited');
+                $this->productUpdater->setValue($product, $configuration['field'], $configuration['data'], $configuration['locale'], $configuration['scope']);
             }
-
 
             $this->productSaver->saveAll($productsPage, $this->getSavingOptions());
             $this->detachProducts($productsPage);

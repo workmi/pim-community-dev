@@ -2,9 +2,8 @@
 
 namespace Pim\Bundle\EnrichBundle\MassEditAction\Manager;
 
-use Akeneo\Bundle\BatchBundle\Entity\JobExecution;
 use Pim\Bundle\EnrichBundle\MassEditAction\OperatorRegistry;
-use Pim\Bundle\ImportExportBundle\Event\JobProfileEvents;
+use Pim\Bundle\ImportExportBundle\Manager\JobManager;
 use Doctrine\Common\Persistence\ObjectManager;
 use Pim\Bundle\NotificationBundle\Manager\NotificationManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -18,7 +17,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  * @copyright 2015 Akeneo SAS (http://www.akeneo.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-class MassEditJobManager
+class MassEditJobManager extends JobManager
 {
     /** @var string */
     protected $rootDir;
@@ -26,20 +25,19 @@ class MassEditJobManager
     /** @var string */
     protected $environment;
 
-    /** @var EventDispatcherInterface */
-    protected $eventDispatcher;
+    /** @var OperatorRegistry */
+    protected $operatorRegistry;
 
-    /** @var string */
-    protected $jobExecutionClass;
-
-    /**  @var ObjectManager */
-    protected $objectManager;
+    /** @var NotificationManager */
+    protected $notificationManager;
 
     /**
      * Constructor
      *
      * @param ObjectManager            $objectManager
      * @param EventDispatcherInterface $eventDispatcher
+     * @param OperatorRegistry         $operatorRegistry
+     * @param NotificationManager      $notificationManager
      * @param string                   $jobExecutionClass
      * @param string                   $rootDir
      * @param string                   $environment
@@ -47,15 +45,30 @@ class MassEditJobManager
     public function __construct(
         ObjectManager $objectManager,
         EventDispatcherInterface $eventDispatcher,
+        OperatorRegistry $operatorRegistry,
+        NotificationManager $notificationManager,
         $jobExecutionClass,
         $rootDir,
         $environment
     ) {
+        parent::__construct($objectManager, $eventDispatcher, $jobExecutionClass);
+
+        $this->operatorRegistry    = $operatorRegistry;
         $this->rootDir             = $rootDir;
         $this->environment         = $environment;
-        $this->eventDispatcher     = $eventDispatcher;
-        $this->jobExecutionClass   = $jobExecutionClass;
-        $this->objectManager       = $objectManager;
+        $this->notificationManager = $notificationManager;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return JobInstance
+     */
+    public function getJobInstance($id)
+    {
+        $jobInstance = $this->objectManager->find('AkeneoBatchBundle:JobInstance', $id);
+
+        return $jobInstance;
     }
 
     /**
@@ -69,10 +82,10 @@ class MassEditJobManager
     {
         $jobExecution = $this->create($jobInstance, $user);
         $executionId  = $jobExecution->getId();
-        $pathFinder   = new PhpExecutableFinder();
+        $pathFinder  = new PhpExecutableFinder();
 
         $cmd = sprintf(
-            '%s %s/console akeneo:batch:job --env=%s change_status %s --config="%s" >> %s/logs/batch_execute.log 2>&1',
+            '%s %s/console akeneo:batch:job --env=%s %s --config=\'[%s]\' >> %s/logs/batch_execute.log 2>&1',
             $pathFinder->find(),
             $this->rootDir,
             $this->environment,
@@ -86,29 +99,6 @@ class MassEditJobManager
         // the process cloning fail when the parent process, i.e. HTTP request, stops
         // at the same time)
         exec($cmd . ' &');
-
-        $this->eventDispatcher->dispatch(JobProfileEvents::POST_EXECUTE, new GenericEvent($jobInstance));
-
-        return $jobExecution;
-    }
-
-    /**
-     * Instantiate a new job execution
-     *
-     * @param JobInstance   $jobInstance
-     * @param UserInterface $user
-     *
-     * @return JobExecution
-     * @throws \Exception
-     */
-    protected function create(JobInstance $jobInstance, UserInterface $user)
-    {
-        $jobExecution = new $this->jobExecutionClass();
-
-        $jobExecution->setJobInstance($jobInstance)->setUser($user->getUsername());
-        $this->objectManager->persist($jobExecution);
-        $this->objectManager->flush($jobExecution);
-
 
         return $jobExecution;
     }

@@ -165,6 +165,7 @@ services:
             - '@akeneo_batch.job_repository'
             - '@akeneo_batch.connectors'
             - '@pim_enrich.mass_edit_action.operation.registry'
+            - '@akeneo_batch.launch.simple_job_launcher'
 
     pim_enrich.controller.group:
         scope: request
