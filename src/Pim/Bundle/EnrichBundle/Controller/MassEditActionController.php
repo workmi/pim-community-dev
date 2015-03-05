@@ -2,18 +2,16 @@
 
 namespace Pim\Bundle\EnrichBundle\Controller;
 
-use Akeneo\Bundle\BatchBundle\Entity\JobInstance;
+use Akeneo\Bundle\BatchBundle\Job\JobParameters;
+use Akeneo\Bundle\BatchBundle\Launch\JobLauncher;
 use Doctrine\Common\Persistence\ManagerRegistry;
-use Oro\Bundle\SecurityBundle\Annotation\AclAncestor;
 use Oro\Bundle\DataGridBundle\Extension\MassAction\MassActionParametersParser;
 use Pim\Bundle\DataGridBundle\Adapter\GridFilterAdapterInterface;
 use Pim\Bundle\DataGridBundle\Extension\MassAction\MassActionDispatcher;
 use Pim\Bundle\EnrichBundle\AbstractController\AbstractDoctrineController;
 use Pim\Bundle\EnrichBundle\Form\Type\MassEditOperatorType;
-use Pim\Bundle\EnrichBundle\MassEditAction\Manager\MassEditJobManager;
 use Pim\Bundle\EnrichBundle\MassEditAction\Operator\AbstractMassEditOperator;
 use Pim\Bundle\EnrichBundle\MassEditAction\OperatorRegistry;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Templating\EngineInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Form\FormError;
@@ -52,8 +50,8 @@ class MassEditActionController extends AbstractDoctrineController
     /** @var GridFilterAdapterInterface */
     protected $gridFilterAdapter;
 
-    /** @var MassEditJobManager */
-    protected $massEditJobManager;
+    /** @var JobLauncher */
+    protected $jobLauncher;
 
     /**
      * Constructor
@@ -87,7 +85,7 @@ class MassEditActionController extends AbstractDoctrineController
         MassActionParametersParser $parametersParser,
         MassActionDispatcher $massActionDispatcher,
         GridFilterAdapterInterface $gridFilterAdapter,
-        MassEditJobManager $massEditJobManager
+        JobLauncher $jobLauncher
     ) {
         parent::__construct(
             $request,
@@ -105,7 +103,7 @@ class MassEditActionController extends AbstractDoctrineController
         $this->parametersParser     = $parametersParser;
         $this->massActionDispatcher = $massActionDispatcher; // TODO: to remove
         $this->gridFilterAdapter    = $gridFilterAdapter;
-        $this->massEditJobManager   = $massEditJobManager;
+        $this->jobLauncher          = $jobLauncher;
     }
 
     /**
@@ -207,23 +205,8 @@ class MassEditActionController extends AbstractDoctrineController
         if ($form->isValid()) {
 
             $operator->getOperation()->saveConfiguration();
-            $pimFilters = $this->gridFilterAdapter->transform($this->request);
 
-            $jobInstance = new JobInstance(null, sprintf('mass-edit-%s', $operationAlias));
-            $jobCode = sprintf('%s_%s', $jobInstance->getType(), uniqid());
-            $rawConfiguration = json_encode($operator->getOperation()->getConfiguration());
-            $jobInstance->setCode($jobCode)
-                ->setAlias($jobCode)
-                ->setConnector('')
-                ->setRawConfiguration([
-                    'operationAlias' => $operationAlias,
-                    'gridName'       => $this->request->get('gridName'),
-                    'filters'        => json_encode($pimFilters),
-                ]);
-
-            $this->massEditJobManager->save($jobInstance);
-            $this->massEditJobManager->launchJob($jobInstance, $this->getUser(), $rawConfiguration);
-
+            // TODO : put validator in JobParametersValidator ?
             // Binding does not actually perform the operation, thus form errors can miss some constraints
             foreach ($this->validator->validate($operator) as $violation) {
                 $form->addError(
@@ -238,7 +221,22 @@ class MassEditActionController extends AbstractDoctrineController
         }
 
         if ($form->isValid()) {
-            $operator->finalizeOperation();
+
+            // TODO : put JobParameter array generation in the operation
+            $pimFilters = $this->gridFilterAdapter->transform($this->request);
+            $operationConfiguration = json_encode($operator->getOperation()->getConfiguration());
+
+            $massEditParamaters = [
+                'operationAlias' => $operationAlias,
+                'gridName'       => $this->request->get('gridName'),
+                'filters'        => json_encode($pimFilters),
+                'operations'     => $operationConfiguration
+            ];
+            $jobParamaters = new JobParameters();
+            $jobParamaters->setJobParameters($massEditParamaters);
+
+            $this->jobLauncher->run($this->job, $jobParamaters);
+
             $this->addFlash(
                 'success',
                 sprintf('pim_enrich.mass_edit_action.%s.launched_flash', $operationAlias)
