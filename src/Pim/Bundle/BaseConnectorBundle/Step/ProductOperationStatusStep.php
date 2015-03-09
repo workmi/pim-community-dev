@@ -4,7 +4,7 @@ namespace Pim\Bundle\BaseConnectorBundle\Step;
 
 use Akeneo\Bundle\BatchBundle\Entity\StepExecution;
 use Akeneo\Bundle\BatchBundle\Step\AbstractStep;
-use Pim\Bundle\EnrichBundle\MassEditAction\Handler\SingleOperationStepHandler;
+use Pim\Bundle\EnrichBundle\MassEditAction\Handler\ProductOperationStepHandler;
 
 /**
  * Step for mass edit
@@ -13,12 +13,12 @@ use Pim\Bundle\EnrichBundle\MassEditAction\Handler\SingleOperationStepHandler;
  * @copyright 2015 Akeneo SAS (http://www.akeneo.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-class SingleOperationStatusStep extends AbstractStep
+class ProductOperationStatusStep extends AbstractStep
 {
     /** @var array */
     protected $configuration;
 
-    /** @var SingleOperationStepHandler */
+    /** @var ProductOperationStepHandler */
     protected $handler;
 
     /**
@@ -57,7 +57,7 @@ class SingleOperationStatusStep extends AbstractStep
     }
 
     /**
-     * @return SingleOperationStepHandler
+     * @return ProductOperationStepHandler
      */
     public function getHandler()
     {
@@ -65,7 +65,7 @@ class SingleOperationStatusStep extends AbstractStep
     }
 
     /**
-     * @param SingleOperationStepHandler $handler
+     * @param ProductOperationStepHandler $handler
      */
     public function setHandler($handler)
     {

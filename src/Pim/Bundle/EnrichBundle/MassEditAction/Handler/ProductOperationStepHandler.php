@@ -18,7 +18,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 * @copyright 2015 Akeneo SAS (http://www.akeneo.com)
 * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
 */
-class SingleOperationStepHandler extends AbstractConfigurableStepElement implements StepExecutionAwareInterface
+class ProductOperationStepHandler extends AbstractConfigurableStepElement implements StepExecutionAwareInterface
 {
     /** @var ProductQueryBuilderFactoryInterface */
     protected $pqbFactory;
