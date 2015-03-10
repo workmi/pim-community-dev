@@ -8,7 +8,7 @@ use Pim\Bundle\CatalogBundle\Factory\AttributeRequirementFactory;
 use Pim\Bundle\CatalogBundle\Model\ChannelInterface;
 
 /**
- * Create attribute requirements for each family attributes after creating a channel
+ * Attribute requirements for each family attributes after creating a channel
  * If the attribute is the identifier, then the requirement should be required
  *
  * @author    Gildas Quemener <gildas@akeneo.com>
