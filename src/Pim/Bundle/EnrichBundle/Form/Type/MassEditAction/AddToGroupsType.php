@@ -2,6 +2,7 @@
 
 namespace Pim\Bundle\EnrichBundle\Form\Type\MassEditAction;
 
+use Pim\Bundle\CatalogBundle\Repository\GroupRepositoryInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -21,14 +22,19 @@ class AddToGroupsType extends AbstractType
     /** @var string */
     protected $groupClassName;
 
+    /** @var GroupRepositoryInterface */
+    protected $groupRepository;
+
     /**
-     * @param string $groupClassName
-     * @param string $dataClass
+     * @param GroupRepositoryInterface $groupRepository
+     * @param string                   $groupClassName
+     * @param string                   $dataClass
      */
-    public function __construct($groupClassName, $dataClass)
+    public function __construct(GroupRepositoryInterface $groupRepository, $groupClassName, $dataClass)
     {
-        $this->groupClassName = $groupClassName;
-        $this->dataClass      = $dataClass;
+        $this->groupClassName  = $groupClassName;
+        $this->dataClass       = $dataClass;
+        $this->groupRepository = $groupRepository;
     }
 
     /**
@@ -57,7 +63,7 @@ class AddToGroupsType extends AbstractType
         $resolver->setDefaults(
             [
                 'data_class' => $this->dataClass,
-                'groups' => [],
+                'groups'     => $this->groupRepository->getAllGroupsExceptVariant(),
             ]
         );
     }
