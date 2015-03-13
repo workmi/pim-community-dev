@@ -9,6 +9,7 @@ parameters:
     pim_datagrid.extension.formatter.property.product_value.boolean_property.class:           Pim\Bundle\DataGridBundle\Extension\Formatter\Property\ProductValue\BooleanProperty
     pim_datagrid.extension.formatter.property.product_value.date_property.class:              Pim\Bundle\DataGridBundle\Extension\Formatter\Property\ProductValue\DateProperty
     pim_datagrid.extension.formatter.property.product_value.twig_property.class:              Pim\Bundle\DataGridBundle\Extension\Formatter\Property\ProductValue\TwigProperty
+    pim_datagrid.extension.formatter.property.product_value.reference_data_property.class:    Pim\Bundle\DataGridBundle\Extension\Formatter\Property\ProductValue\ReferenceDataProperty
     pim_datagrid.extension.formatter.property.product.groups_property.class:                  Pim\Bundle\DataGridBundle\Extension\Formatter\Property\Product\GroupsProperty
 
 services:
@@ -81,6 +82,13 @@ services:
             - '@twig'
         tags:
             - { name: oro_datagrid.extension.formatter.property, type: product_value_twig }
+
+    pim_datagrid.extension.formatter.property.product_value.reference_data_property:
+        class: %pim_datagrid.extension.formatter.property.product_value.reference_data_property.class%
+        arguments:
+            - '@translator'
+        tags:
+            - { name: oro_datagrid.extension.formatter.property, type: product_value_reference_data }
 
     pim_datagrid.extension.formatter.property.product.groups_property:
         class: %pim_datagrid.extension.formatter.property.product.groups_property.class%

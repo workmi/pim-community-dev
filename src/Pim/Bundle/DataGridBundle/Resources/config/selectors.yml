@@ -5,6 +5,7 @@ parameters:
     pim_datagrid.extension.selector.orm.product_value.prices_selector.class:  Pim\Bundle\DataGridBundle\Extension\Selector\Orm\ProductValue\PricesSelector
     pim_datagrid.extension.selector.orm.product_value.metric_selector.class:  Pim\Bundle\DataGridBundle\Extension\Selector\Orm\ProductValue\MetricSelector
     pim_datagrid.extension.selector.orm.product_value.media_selector.class:   Pim\Bundle\DataGridBundle\Extension\Selector\Orm\ProductValue\MediaSelector
+    pim_datagrid.extension.selector.orm.product_value.reference_data.class:   Pim\Bundle\DataGridBundle\Extension\Selector\Orm\ProductValue\ReferenceDataSelector
     pim_datagrid.extension.selector.orm.product.label_selector.class:         Pim\Bundle\DataGridBundle\Extension\Selector\Orm\Product\LabelSelector
     pim_datagrid.extension.selector.orm.product.groups_selector.class:        Pim\Bundle\DataGridBundle\Extension\Selector\Orm\Product\GroupsSelector
     pim_datagrid.extension.selector.orm.product.completeness_selector.class:  Pim\Bundle\DataGridBundle\Extension\Selector\Orm\Product\CompletenessSelector
@@ -51,6 +52,14 @@ services:
             - '@pim_datagrid.extension.selector.orm.product_value.base_selector'
         tags:
             - { name: pim_datagrid.extension.selector, type: product_value_media }
+
+    pim_datagrid.extension.selector.orm.product_value.reference_data:
+        class: %pim_datagrid.extension.selector.orm.product_value.reference_data.class%
+        arguments:
+            - '@pim_datagrid.extension.selector.orm.product_value.base_selector'
+            - '@pim_reference_data.registry'
+        tags:
+            - { name: pim_datagrid.extension.selector, type: product_value_reference_data }
 
     pim_datagrid.extension.selector.orm.product.label_selector:
         class: %pim_datagrid.extension.selector.orm.product.label_selector.class%
