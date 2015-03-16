@@ -168,7 +168,7 @@ class ProductProcessorSpec extends ObjectBehavior
                     [["The value \"\" for not empty attribute \"not_empty_attribute\" is empty"]]
             ]);
 
-        $managerRegistry->getManagerForClass('Double\ProductInterface\P23')->willReturn($objectManager);
+        $managerRegistry->getManagerForClass(Argument::type('string'))->willReturn($objectManager);
 
         $stepExecution->incrementSummaryInfo('skip')->shouldBeCalled();
 
